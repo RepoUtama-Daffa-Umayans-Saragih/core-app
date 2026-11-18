@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+@theme {
+  --color-deep-space: #0B0227;
+  --color-panel: #1F027F;
+  --color-accent: #495AEE;
+  --color-accent-soft: #929BEC;
+  --color-text-light: #DCE2F4;
+  --color-alert-red: #FF4C4C;
+  --color-alert-yellow: #FFC107;
+  --color-neon-green: #00FF9C;
+  --font-display: "Orbitron", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
+
+@layer base {
+  html, body {
+    background-color: #0B0227;
+    color: #DCE2F4;
+    font-family: "Inter", sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scrollbar custom agar sesuai tema Odyssey */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0B0227; }
+  ::-webkit-scrollbar-thumb { background: #495AEE; border-radius: 3px; }
+}
+
+@layer components {
+  /* Kartu glass morphism */
+  .glass-card {
+    background-color: rgba(31, 2, 127, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(146, 155, 236, 0.2);
+    border-radius: 0.75rem;
+  }
+
+  /* Badge status */
+  .status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* Tombol utama */
+  .btn-primary {
+    background-color: #495AEE;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+    box-shadow: 0 0 15px rgba(73, 90, 238, 0.33);
+  }
+  .btn-primary:hover {
+    background-color: rgba(73, 90, 238, 0.8);
+    box-shadow: 0 0 25px rgba(73, 90, 238, 0.73);
+  }
+  .btn-primary:active {
+    transform: scale(0.95);
+  }
+
+  .btn-danger {
+    background-color: #FF4C4C;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+    box-shadow: 0 0 15px rgba(255, 76, 76, 0.33);
+  }
+  .btn-danger:hover {
+    background-color: rgba(255, 76, 76, 0.8);
+    box-shadow: 0 0 25px rgba(255, 76, 76, 0.73);
+  }
+  .btn-danger:active {
+    transform: scale(0.95);
+  }
+
+  .btn-warning {
+    background-color: #FFC107;
+    color: #0B0227;
+    font-weight: 600;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+  }
+  .btn-warning:active {
+    transform: scale(0.95);
+  }
+
+  .w-4\.5 { width: 1.125rem; }
+  .h-4\.5 { height: 1.125rem; }
+}
