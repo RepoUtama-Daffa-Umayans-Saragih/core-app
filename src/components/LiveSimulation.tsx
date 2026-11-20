@@ -28,6 +28,8 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  X,
 } from "lucide-react";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -314,6 +316,7 @@ export default function LiveSimulation() {
 
   // State UI Inspector & Advanced Settings
   const [isInspectorCollapsed, setIsInspectorCollapsed] = useState(false);
+  const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(false);
   const [showAdvancedRender, setShowAdvancedRender] = useState(false);
 
   // Status Telemetri Real-Time
@@ -1432,12 +1435,49 @@ export default function LiveSimulation() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] w-full bg-[#F4F6F8] text-[#0F172A] select-none overflow-hidden font-sans">
-      {/* ── SIDEBAR PENGATURAN SKENARIO REAL-TIME (FLAT ENTERPRISE PANEL) ── */}
-      {!isInspectorCollapsed && (
-        <aside className="w-[304px] shrink-0 bg-white border-r border-[#D8E0EA] divide-y divide-[#D8E0EA] flex flex-col p-0 overflow-y-auto">
-          {/* 1. Header Modul */}
-          <div className="p-3.5 flex items-center justify-between shrink-0">
+    <div className="relative flex flex-col md:flex-row h-[calc(100dvh-5.5rem)] md:h-[calc(100dvh-3.5rem)] w-full overflow-hidden bg-[#F4F6F8] text-[#0F172A] select-none font-sans">
+      {/* ── MOBILE BACKDROP ── */}
+      {isMobileControlsOpen && (
+        <div
+          onClick={() => setIsMobileControlsOpen(false)}
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-xs md:hidden"
+        />
+      )}
+
+      {/* ── SIDEBAR PENGATURAN SKENARIO REAL-TIME (FLAT ENTERPRISE PANEL / MOBILE BOTTOM SHEET) ── */}
+      {(isMobileControlsOpen || !isInspectorCollapsed) && (
+        <aside
+          className={`
+            bg-white border-[#D8E0EA] flex flex-col p-0 overflow-y-auto transition-transform duration-200
+            ${
+              isMobileControlsOpen
+                ? "fixed inset-x-0 bottom-0 z-40 max-h-[78dvh] rounded-t-2xl shadow-2xl border-t divide-y divide-[#D8E0EA] pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
+                : "hidden"
+            }
+            ${!isInspectorCollapsed ? "md:flex" : "md:hidden"}
+            md:static md:w-[304px] md:shrink-0 md:border-r md:divide-y md:divide-[#D8E0EA] md:max-h-none md:rounded-none md:shadow-none md:border-t-0 md:pb-0
+          `}
+        >
+          {/* Mobile-only sheet header with Grab Handle & Close Button */}
+          <div className="flex items-center justify-between p-3 border-b border-[#D8E0EA] md:hidden relative bg-[#F8FAFC]">
+            <div className="w-10 h-1 rounded-full bg-[#D8E0EA] absolute left-1/2 -translate-x-1/2 top-2" />
+            <div className="flex items-center gap-1.5 pt-1">
+              <span className="w-2 h-2 rounded-full bg-[#072F5F]" />
+              <span className="text-xs font-bold text-[#0F172A] tracking-wide uppercase">
+                KONTROL SIMULASI C.O.R.E.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsMobileControlsOpen(false)}
+              className="p-1 rounded-md text-[#556578] hover:text-[#0F172A] hover:bg-[#EEF2F6] transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* 1. Header Modul (Desktop view) */}
+          <div className="p-3.5 hidden md:flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#072F5F] animate-pulse shrink-0" />
               <div>
@@ -1737,7 +1777,7 @@ export default function LiveSimulation() {
       )}
 
       {/* ── AREA MAPBOX DIGITAL TWIN UTAMA ── */}
-      <main className="flex-1 p-3.5 flex flex-col min-h-0 bg-[#F4F6F8]">
+      <main className="flex-1 p-2 md:p-3.5 flex flex-col min-h-0 bg-[#F4F6F8] relative">
         <div className="relative w-full flex-1 min-h-0 bg-gray-100 rounded-xl overflow-hidden border border-[#D8E0EA] shadow-xs">
           <Map
             ref={mapRef}
@@ -2205,7 +2245,7 @@ export default function LiveSimulation() {
               <button
                 type="button"
                 onClick={() => setIsInspectorCollapsed(false)}
-                className="pointer-events-auto flex items-center gap-1.5 px-2.5 py-1.5 bg-white/95 backdrop-blur-md border border-[#D8E0EA] rounded-lg shadow-sm text-xs font-semibold text-[#0F172A] hover:bg-[#F8FAFC] transition-all cursor-pointer"
+                className="pointer-events-auto hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-white/95 backdrop-blur-md border border-[#D8E0EA] rounded-lg shadow-sm text-xs font-semibold text-[#0F172A] hover:bg-[#F8FAFC] transition-all cursor-pointer"
                 title="Buka Panel Kontrol"
               >
                 <Sliders className="w-3.5 h-3.5 text-[#072F5F]" />
@@ -2213,16 +2253,16 @@ export default function LiveSimulation() {
               </button>
             )}
 
-            <div className="pointer-events-auto flex items-center gap-2 px-3 py-1.5 bg-white/90 backdrop-blur-md border border-[#D8E0EA] rounded-lg shadow-xs text-xs">
+            <div className="pointer-events-auto flex items-center gap-2 px-2.5 md:px-3 py-1 md:py-1.5 bg-white/90 backdrop-blur-md border border-[#D8E0EA] rounded-lg shadow-xs text-xs max-w-[calc(100vw-2rem)] md:max-w-none">
               <span className="w-2 h-2 rounded-full bg-[#0F766E] animate-pulse shrink-0" />
-              <span className="font-bold text-[#072F5F] tracking-wide uppercase text-[11px]">
+              <span className="font-bold text-[#072F5F] tracking-wide uppercase text-[10px] md:text-[11px] shrink-0">
                 JAKARTA DIGITAL TWIN
               </span>
               <span className="text-[#D8E0EA]">|</span>
-              <span className="text-[#556578] font-medium text-[11px] truncate max-w-[340px]">
+              <span className="text-[#556578] font-medium text-[10px] md:text-[11px] truncate max-w-[200px] md:max-w-[340px]">
                 {cameraMode === "VIEW_ALL" ? (
                   <span>
-                    Mode: <strong>View All (Kamera Bebas)</strong>
+                    Mode: <strong>View All</strong>
                   </span>
                 ) : activeAmbulance ? (
                   <span>
@@ -2233,6 +2273,35 @@ export default function LiveSimulation() {
                 )}
               </span>
             </div>
+          </div>
+
+          {/* ── MOBILE COMPACT PEEK BAR (md:hidden) ── */}
+          <div className="md:hidden absolute bottom-0 inset-x-0 z-20 bg-white/95 backdrop-blur-md border-t border-[#D8E0EA] px-4 py-2.5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center justify-between shadow-lg">
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                type="button"
+                onClick={() => setRunning((r) => !r)}
+                className="p-1.5 rounded-md border border-[#D8E0EA] bg-[#F8FAFC] text-[#0F172A] cursor-pointer"
+                title={running ? "Jeda" : "Lanjutkan"}
+              >
+                {running ? (
+                  <Square className="w-3.5 h-3.5 fill-current text-[#C81E1E]" />
+                ) : (
+                  <Play className="w-3.5 h-3.5 fill-current text-[#0F766E]" />
+                )}
+              </button>
+              <span className="text-xs font-bold text-[#0F172A] truncate">
+                {activeAmbulance ? activeAmbulance.callSign : `${ambulances.filter((a) => a.active).length}/8 Aktif`}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsMobileControlsOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#072F5F] text-white rounded-lg text-xs font-bold shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
+            >
+              <span>Kontrol Simulasi</span>
+              <ChevronUp className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </main>

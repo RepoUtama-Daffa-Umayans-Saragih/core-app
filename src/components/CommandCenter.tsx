@@ -5,6 +5,7 @@ import {
   Radio, MapPin, Siren,
   AlertTriangle, CheckCircle2, Clock,
   ChevronRight, Zap, RotateCcw,
+  ChevronUp, X,
 } from "lucide-react";
 import { useCore, type Ambulance as AmbType, type DispatchCode } from "@/context/CoreContext";
 import { useToast } from "@/components/ToastProvider";
@@ -74,7 +75,7 @@ function AmbulanceCard({ amb }: { amb: AmbType }) {
   );
 }
 
-function DispatchPanel() {
+function DispatchPanel({ onDispatched }: { onDispatched?: () => void }) {
   const { state, triggerDispatch, resetDispatch } = useCore();
   const { addToast } = useToast();
   const [isDispatchingRed, setIsDispatchingRed] = useState(false);
@@ -119,6 +120,7 @@ function DispatchPanel() {
     triggerDispatch(selectedAmb.id, code);
 
     setter(false);
+    onDispatched?.();
 
     if (code === "CODE_RED") {
       addToast({
@@ -278,14 +280,14 @@ function MetricCell({
   accent?: boolean;
 }) {
   return (
-    <div className="flex flex-col p-3 bg-transparent">
+    <div className="flex flex-col p-2.5 sm:p-3 bg-transparent">
       <div className="flex items-center gap-1.5 mb-1 min-w-0">
         <Icon className={`w-3.5 h-3.5 shrink-0 ${accent ? "text-[#0B5D7A]" : "text-[#738396]"}`} />
         <span className="text-[10px] font-bold text-[#556578] uppercase tracking-wide whitespace-nowrap overflow-visible">
           {label}
         </span>
       </div>
-      <div className={`text-lg font-bold telemetry-num font-mono ${accent ? "text-[#0B5D7A]" : "text-[#0F172A]"}`}>
+      <div className={`text-base sm:text-lg font-bold telemetry-num font-mono ${accent ? "text-[#0B5D7A]" : "text-[#0F172A]"}`}>
         {value}
       </div>
     </div>
@@ -294,6 +296,7 @@ function MetricCell({
 
 export default function CommandCenter() {
   const { state } = useCore();
+  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
 
   const activeUnits = state.ambulances.filter(
     (a) => a.status !== "IDLE" && a.status !== "STANDBY"
@@ -303,14 +306,51 @@ export default function CommandCenter() {
     ? new Date().toLocaleTimeString("id-ID", { hour12: false })
     : "--:--:--";
 
+  const selectedAmb = state.ambulances.find((a) => a.id === state.selectedAmbId);
+
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden bg-[#F4F6F8]">
+    <div className="relative flex flex-col md:flex-row h-[calc(100dvh-5.5rem)] md:h-[calc(100dvh-3.5rem)] w-full overflow-hidden bg-[#F4F6F8]">
 
-      {/* ── SIDEBAR KIRI (Flat Enterprise Panel) ── */}
-      <aside className="w-80 shrink-0 bg-white border-r border-[#D8E0EA] divide-y divide-[#D8E0EA] flex flex-col p-0 overflow-y-auto">
+      {/* ── MOBILE BACKDROP ── */}
+      {isMobileSheetOpen && (
+        <div
+          onClick={() => setIsMobileSheetOpen(false)}
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-xs md:hidden"
+        />
+      )}
 
-        {/* Section 1: Header */}
-        <div className="p-3.5 flex items-center justify-between shrink-0">
+      {/* ── SIDEBAR / MOBILE BOTTOM SHEET ── */}
+      <aside
+        className={`
+          bg-white border-[#D8E0EA] flex flex-col p-0 overflow-y-auto transition-transform duration-200
+          ${
+            isMobileSheetOpen
+              ? "fixed inset-x-0 bottom-0 z-40 max-h-[78dvh] rounded-t-2xl shadow-2xl border-t divide-y divide-[#D8E0EA] pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
+              : "hidden md:flex"
+          }
+          md:static md:w-80 md:shrink-0 md:border-r md:divide-y md:divide-[#D8E0EA] md:max-h-none md:rounded-none md:shadow-none md:pb-0
+        `}
+      >
+        {/* Mobile-only sheet header with Grab Handle & Close Button */}
+        <div className="flex items-center justify-between p-3 border-b border-[#D8E0EA] md:hidden relative bg-[#F8FAFC]">
+          <div className="w-10 h-1 rounded-full bg-[#D8E0EA] absolute left-1/2 -translate-x-1/2 top-2" />
+          <div className="flex items-center gap-1.5 pt-1">
+            <span className="w-2 h-2 rounded-full bg-[#072F5F]" />
+            <span className="text-xs font-bold text-[#0F172A] tracking-wide uppercase">
+              PANEL ARMADA &amp; DISPATCH
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsMobileSheetOpen(false)}
+            className="p-1 rounded-md text-[#556578] hover:text-[#0F172A] hover:bg-[#EEF2F6] transition-colors cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Section 1: Header (Desktop view) */}
+        <div className="p-3.5 hidden md:flex items-center justify-between shrink-0">
           <div>
             <h2 className="text-[10px] font-bold text-[#556578] uppercase tracking-wider">
               ARMADA AKTIF
@@ -369,26 +409,26 @@ export default function CommandCenter() {
         </div>
 
         {/* Section 4: Dock Aksi Bawah */}
-        <DispatchPanel />
+        <DispatchPanel onDispatched={() => setIsMobileSheetOpen(false)} />
       </aside>
 
-      {/* ── AREA PETA KANAN ── */}
-      <main className="flex-1 flex flex-col p-3.5 gap-2.5 overflow-hidden bg-[#F4F6F8]">
+      {/* ── AREA PETA UTAMA (Zero-touch WebGL Single DOM Node) ── */}
+      <main className="flex-1 flex flex-col p-2 md:p-3.5 gap-2 md:gap-2.5 overflow-hidden bg-[#F4F6F8] min-h-0 relative">
 
         <div className="flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <MapPin className="w-3.5 h-3.5 text-[#072F5F]" />
-            <span className="text-[11px] font-bold tracking-wider uppercase text-[#072F5F]">
+          <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
+            <MapPin className="w-3.5 h-3.5 text-[#072F5F] shrink-0" />
+            <span className="text-[10px] md:text-[11px] font-bold tracking-wider uppercase text-[#072F5F] truncate">
               PETA OPERASIONAL REAL-TIME
             </span>
-            <span className="text-xs text-[#556578] ml-1.5 font-medium">
+            <span className="hidden sm:inline text-xs text-[#556578] ml-1.5 font-medium truncate">
               Koridor Medis Jakarta · Salemba Raya (RSCM)
             </span>
           </div>
 
           {state.dispatchCode !== "IDLE" && state.dispatchCode !== "STANDBY" && (
             <div className={`
-              flex items-center gap-2 px-2.5 py-1 rounded-full border text-xs font-semibold shadow-xs
+              flex items-center gap-1.5 md:gap-2 px-2 md:px-2.5 py-0.5 md:py-1 rounded-full border text-[10px] md:text-xs font-semibold shadow-xs shrink-0
               ${state.dispatchCode === "CODE_RED"
                 ? "bg-[#FEF2F2] border-[#C81E1E]/30 text-[#991B1B]"
                 : "bg-[#FEF3C7] border-[#B45309]/30 text-[#92400E]"
@@ -398,19 +438,39 @@ export default function CommandCenter() {
               <span>
                 C.O.R.E. AKTIF —{" "}
                 {state.ambulances.find((a) => a.id === state.selectedAmbId)?.callSign}
-                {" "}→ RSUD Dr. Cipto
               </span>
             </div>
           )}
         </div>
 
-        <div className="flex-1 min-h-0 rounded-xl overflow-hidden border border-[#D8E0EA] bg-white shadow-xs">
+        <div className="flex-1 min-h-0 rounded-xl overflow-hidden border border-[#D8E0EA] bg-white shadow-xs relative">
           <MockMap />
         </div>
 
-        <div className="shrink-0 flex items-center justify-between text-[11px] text-[#556578] px-1 font-medium">
-          <span>Engine: Petal Maps Web API v2.4 (Enterprise Light) · Proyeksi: Web Mercator</span>
-          <span className="font-mono telemetry-num">Siklus Telemetri: 1Hz GPS Direct WebGL</span>
+        <div className="shrink-0 flex items-center justify-between text-[10px] md:text-[11px] text-[#556578] px-1 font-medium pb-12 md:pb-0">
+          <span>Engine: Petal Maps Web API v2.4 (Enterprise Light)<span className="hidden sm:inline"> · Proyeksi: Web Mercator</span></span>
+          <span className="font-mono telemetry-num hidden sm:inline">Siklus: 1Hz GPS Direct WebGL</span>
+        </div>
+
+        {/* ── COMPACT BOTTOM PEEK BAR (Mobile Only) ── */}
+        <div className="md:hidden absolute bottom-0 inset-x-0 z-20 bg-white/95 backdrop-blur-md border-t border-[#D8E0EA] px-4 py-2.5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center justify-between shadow-lg">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-[#072F5F] shrink-0" />
+            <span className="text-xs font-bold text-[#0F172A] truncate">
+              {selectedAmb ? selectedAmb.callSign : "ARMADA C.O.R.E."}
+            </span>
+            {selectedAmb && (
+              <StatusBadge status={selectedAmb.status} size="sm" showDot={false} />
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsMobileSheetOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#072F5F] text-white rounded-lg text-xs font-bold shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
+          >
+            <span>Buka Panel Armada</span>
+            <ChevronUp className="w-3.5 h-3.5" />
+          </button>
         </div>
       </main>
     </div>

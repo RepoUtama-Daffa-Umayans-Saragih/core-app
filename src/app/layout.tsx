@@ -27,11 +27,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="id" className={`${plusJakarta.variable} ${ibmPlexMono.variable}`}>
-      <body className="bg-[#F4F6F8] text-[#0F172A] font-sans antialiased min-h-screen">
+      <body className="bg-[#F4F6F8] text-[#0F172A] font-sans antialiased min-h-[100dvh] overflow-x-hidden">
         <CoreProvider>
           <ToastProvider>
             <Navbar />
-            <main className="pt-14 min-h-screen">
+            <main className="pt-[5.5rem] md:pt-14 min-h-[100dvh] overflow-x-hidden">
               {children}
             </main>
           </ToastProvider>

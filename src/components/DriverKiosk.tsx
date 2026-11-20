@@ -21,7 +21,7 @@ import StatusBadge from "@/components/ui/StatusBadge";
 function ContextualStatusChip({ status }: { status: DispatchCode | undefined }) {
   if (status === "DISPATCHED_WAITING") {
     return (
-      <div className="pointer-events-auto flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#B45309]/30 bg-[#FEF3C7] text-[#92400E] shadow-sm text-xs font-semibold animate-pulse">
+      <div className="pointer-events-auto flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full border border-[#B45309]/30 bg-[#FEF3C7] text-[#92400E] shadow-sm text-[11px] md:text-xs font-semibold animate-pulse">
         <span className="w-2 h-2 rounded-full bg-[#B45309]" />
         <span>Menunggu Konfirmasi</span>
       </div>
@@ -30,7 +30,7 @@ function ContextualStatusChip({ status }: { status: DispatchCode | undefined }) 
 
   if (status === "EN_ROUTE" || status === "CODE_RED" || status === "CODE_YELLOW") {
     return (
-      <div className="pointer-events-auto flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0F766E] text-white shadow-sm text-xs font-semibold">
+      <div className="pointer-events-auto flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full bg-[#0F766E] text-white shadow-sm text-[11px] md:text-xs font-semibold">
         <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
         <span>Green Wave Aktif</span>
       </div>
@@ -39,7 +39,7 @@ function ContextualStatusChip({ status }: { status: DispatchCode | undefined }) 
 
   if (status === "ARRIVED") {
     return (
-      <div className="pointer-events-auto flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#0F766E]/30 bg-[#ECFDF5] text-[#065F46] shadow-sm text-xs font-semibold">
+      <div className="pointer-events-auto flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full border border-[#0F766E]/30 bg-[#ECFDF5] text-[#065F46] shadow-sm text-[11px] md:text-xs font-semibold">
         <span className="w-2 h-2 rounded-full bg-[#0F766E]" />
         <span>Tiba di Tujuan</span>
       </div>
@@ -48,7 +48,7 @@ function ContextualStatusChip({ status }: { status: DispatchCode | undefined }) 
 
   // Default: STANDBY / IDLE
   return (
-    <div className="pointer-events-auto flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#D8E0EA] bg-white/90 text-[#334155] shadow-sm text-xs font-semibold">
+    <div className="pointer-events-auto flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full border border-[#D8E0EA] bg-white/90 text-[#334155] shadow-sm text-[11px] md:text-xs font-semibold">
       <span className="w-2 h-2 rounded-full bg-[#738396]" />
       <span>Siaga di Pangkalan</span>
     </div>
@@ -151,7 +151,7 @@ export default function DriverKiosk() {
     : Math.round(hud.progress * 100);
 
   return (
-    <div className="relative h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-[#F4F6F8] flex flex-col font-sans select-none">
+    <div className="relative h-[calc(100dvh-5.5rem)] md:h-[calc(100dvh-3.5rem)] w-full overflow-hidden bg-[#F4F6F8] flex flex-col font-sans select-none">
       {/* ── AREA PETA FULL-BLEED ── */}
       <div className="relative flex-1 w-full min-h-0">
 
@@ -171,7 +171,7 @@ export default function DriverKiosk() {
               <ChevronDown className="w-3.5 h-3.5 text-[#556578]" />
             </button>
           ) : (
-            <div className="pointer-events-auto w-[252px] bg-white/90 backdrop-blur-md border border-[#D8E0EA] rounded-xl shadow-[0_8px_24px_rgba(15,23,42,0.08)] p-3 flex flex-col gap-2.5">
+            <div className="pointer-events-auto w-[calc(100vw-1.5rem)] sm:w-[252px] max-w-[252px] bg-white/90 backdrop-blur-md border border-[#D8E0EA] rounded-xl shadow-[0_8px_24px_rgba(15,23,42,0.08)] p-3 flex flex-col gap-2.5">
               {/* Header Kartu */}
               <div className="flex items-center justify-between border-b border-[#D8E0EA]/70 pb-2">
                 <div className="flex items-center gap-1.5">
@@ -264,51 +264,54 @@ export default function DriverKiosk() {
         />
       </div>
 
-      {/* ── UNIFIED BOTTOM COCKPIT DOCK (h-20) ── */}
-      <div className="shrink-0 h-20 bg-white/95 backdrop-blur-md border-t border-[#D8E0EA] px-6 flex items-center justify-between gap-6 z-20 shadow-lg">
+      {/* ── UNIFIED BOTTOM COCKPIT DOCK (RESPONSIF MOBILE / DESKTOP) ── */}
+      <div className="shrink-0 h-auto md:h-20 bg-white/95 backdrop-blur-md border-t border-[#D8E0EA] px-3.5 py-2.5 md:py-0 md:px-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 md:gap-6 z-20 shadow-lg pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-0">
 
-        {/* Sektor Kiri: Tujuan Medis & Koridor */}
-        <div className="flex flex-col justify-center min-w-[200px] max-w-[280px]">
-          <div className="text-[10px] font-bold tracking-wider uppercase text-[#556578] mb-0.5">
-            TUJUAN MEDIS
-          </div>
-          <div className="text-sm font-bold text-[#0F172A] leading-tight truncate">
-            {activeAmb?.hospitalName || "RSUD Dr. Cipto Mangunkusumo (IGD)"}
-          </div>
-          <div className="text-[11px] text-[#556578] font-medium mt-0.5 truncate">
-            Koridor Salemba Raya · {poolRoute.startName || "Matraman"}
-          </div>
-        </div>
-
-        {/* Sektor Tengah: ETA dan Sisa Jarak Berdampingan */}
-        <div className="flex items-center gap-6 px-4 py-1.5 rounded-lg bg-[#F8FAFC] border border-[#D8E0EA]/60">
-          {/* ETA */}
-          <div className="flex flex-col items-center">
-            <div className="text-[10px] font-bold tracking-wider uppercase text-[#556578] flex items-center gap-1 mb-0.5">
-              <Clock className="w-3 h-3 text-[#738396]" />
-              <span>ESTIMASI TIBA (ETA)</span>
+        {/* Baris Atas Mobile / Sektor Kiri & Tengah Desktop */}
+        <div className="flex items-center justify-between gap-3 md:contents">
+          {/* Sektor Kiri: Tujuan Medis & Koridor */}
+          <div className="flex flex-col justify-center min-w-0 max-w-[190px] md:max-w-[280px]">
+            <div className="text-[9px] md:text-[10px] font-bold tracking-wider uppercase text-[#556578] mb-0.5 truncate">
+              TUJUAN MEDIS
             </div>
-            <div className="text-xl font-extrabold text-[#0F172A] telemetry-num font-mono">
-              {etaDisplay}
+            <div className="text-xs md:text-sm font-bold text-[#0F172A] leading-tight truncate">
+              {activeAmb?.hospitalName || "RSUD Dr. Cipto Mangunkusumo"}
+            </div>
+            <div className="text-[10px] md:text-[11px] text-[#556578] font-medium mt-0.5 truncate">
+              Salemba Raya · {poolRoute.startName?.split(" ")[0] || "Matraman"}
             </div>
           </div>
 
-          {/* Garis Pemisah Vertikal Tipis */}
-          <div className="h-8 w-px bg-[#D8E0EA]" />
-
-          {/* Sisa Jarak */}
-          <div className="flex flex-col items-center">
-            <div className="text-[10px] font-bold tracking-wider uppercase text-[#556578] mb-0.5">
-              SISA JARAK
+          {/* Sektor Tengah: ETA dan Sisa Jarak Berdampingan */}
+          <div className="flex items-center gap-3 md:gap-6 px-2.5 md:px-4 py-1 md:py-1.5 rounded-lg bg-[#F8FAFC] border border-[#D8E0EA]/60 shrink-0">
+            {/* ETA */}
+            <div className="flex flex-col items-center">
+              <div className="text-[9px] md:text-[10px] font-bold tracking-wider uppercase text-[#556578] flex items-center gap-1 mb-0.5">
+                <Clock className="w-2.5 h-2.5 md:w-3 md:h-3 text-[#738396]" />
+                <span>ETA</span>
+              </div>
+              <div className="text-sm md:text-xl font-extrabold text-[#0F172A] telemetry-num font-mono">
+                {etaDisplay}
+              </div>
             </div>
-            <div className="text-xl font-extrabold text-[#0F172A] telemetry-num font-mono">
-              {distanceDisplay}
+
+            {/* Garis Pemisah Vertikal Tipis */}
+            <div className="h-6 md:h-8 w-px bg-[#D8E0EA]" />
+
+            {/* Sisa Jarak */}
+            <div className="flex flex-col items-center">
+              <div className="text-[9px] md:text-[10px] font-bold tracking-wider uppercase text-[#556578] mb-0.5">
+                JARAK
+              </div>
+              <div className="text-sm md:text-xl font-extrabold text-[#0F172A] telemetry-num font-mono">
+                {distanceDisplay}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Sektor Kanan: Slot Aksi Tunggal Kontekstual */}
-        <div className="flex items-center justify-end min-w-[220px] max-w-[300px]">
+        <div className="flex items-center justify-end w-full md:w-auto md:min-w-[220px] md:max-w-[300px]">
           {isDispatchedWaiting ? (
             <button
               type="button"
@@ -323,19 +326,19 @@ export default function DriverKiosk() {
                   });
                 }
               }}
-              className="flex items-center justify-center gap-2 py-2.5 px-5 rounded-lg font-bold text-xs whitespace-nowrap bg-[#C81E1E] hover:bg-[#B91C1C] text-white shadow-sm active:scale-[0.99] transition-all cursor-pointer animate-pulse"
+              className="w-full md:w-auto flex items-center justify-center gap-2 py-2 md:py-2.5 px-4 md:px-5 rounded-lg font-bold text-xs whitespace-nowrap bg-[#C81E1E] hover:bg-[#B91C1C] text-white shadow-sm active:scale-[0.99] transition-all cursor-pointer animate-pulse"
             >
-              <Play className="w-4 h-4 fill-white" />
+              <Play className="w-3.5 h-3.5 fill-white" />
               <span>TERIMA &amp; MULAI JALAN</span>
             </button>
           ) : isEnRoute ? (
-            <div className="flex flex-col w-full gap-1.5">
+            <div className="flex flex-col w-full gap-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-[10px] font-bold text-[#0F766E] uppercase tracking-wide flex items-center gap-1">
                   <Navigation className="w-3 h-3 animate-pulse" />
                   <span>EN ROUTE</span>
                 </span>
-                <span className="font-mono font-bold telemetry-num text-[#0F172A]">
+                <span className="font-mono font-bold telemetry-num text-[#0F172A] text-xs">
                   {progressPercent}%
                 </span>
               </div>
@@ -348,7 +351,7 @@ export default function DriverKiosk() {
               </div>
             </div>
           ) : isArrived ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between md:justify-end gap-3 w-full">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-[#065F46]">
                 <CheckCircle className="w-4 h-4 text-[#0F766E]" />
                 <span>Tiba di RS</span>
@@ -363,7 +366,7 @@ export default function DriverKiosk() {
             </div>
           ) : (
             /* STANDBY / IDLE */
-            <div className="flex items-center gap-2 text-xs text-[#556578] font-medium bg-[#EEF2F6] px-3.5 py-2 rounded-lg border border-[#D8E0EA]/70">
+            <div className="flex items-center justify-center gap-2 text-xs text-[#556578] font-medium bg-[#EEF2F6] px-3.5 py-1.5 md:py-2 rounded-lg border border-[#D8E0EA]/70 w-full md:w-auto">
               <Radio className="w-3.5 h-3.5 text-[#072F5F] shrink-0" />
               <span>Siaga di Pangkalan</span>
             </div>
