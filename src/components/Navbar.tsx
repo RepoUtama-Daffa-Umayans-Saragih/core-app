@@ -97,8 +97,8 @@ export default function Navbar() {
         </div>
 
         <div className="border-l-2 border-slate-200 pl-4 hidden sm:block">
-          <div className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest leading-tight max-w-[200px]">
-            CLEARANCE OPTIMIZATION &amp; ROUTING ENGINE
+          <div className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest leading-tight max-w-[160px]">
+            CITY OPTIMIZED RESCUE EDGE
           </div>
         </div>
       </div>

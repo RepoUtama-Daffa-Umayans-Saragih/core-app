@@ -6,8 +6,8 @@ import { ToastProvider } from "@/components/ToastProvider";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "C.O.R.E. — Clearance Optimization & Routing Engine",
-  description: "Emergency Vehicle Traffic Clearance System — Huawei ICT Competition",
+  title: "C.O.R.E. — City Optimized Rescue Edge",
+  description: "City Optimized Rescue Edge (C.O.R.E.) — Emergency Vehicle Traffic Preemption System (Huawei ICT Competition)",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
