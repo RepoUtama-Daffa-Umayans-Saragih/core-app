@@ -7,53 +7,14 @@ import {
   CheckCircle,
   Radio,
   Clock,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
-import { useCore, type DispatchCode } from "@/context/CoreContext";
+import { useCore, HOSPITAL_LOCATION } from "@/context/CoreContext";
 import { useToast } from "@/components/ToastProvider";
 import DriverMockMap, { type MapPoint, type HUDUpdateData } from "@/components/DriverMockMap";
 import { AMBULANCE_ROUTES_POOL } from "@/utils/AmbulanceRoutesPool";
 import * as turf from "@turf/turf";
-import SegmentedControl from "@/components/ui/SegmentedControl";
-import StatusBadge from "@/components/ui/StatusBadge";
 
-function ContextualStatusChip({ status }: { status: DispatchCode | undefined }) {
-  if (status === "DISPATCHED_WAITING") {
-    return (
-      <div className="pointer-events-auto flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full border border-[#B45309]/30 bg-[#FEF3C7] text-[#92400E] shadow-sm text-[11px] md:text-xs font-semibold animate-pulse">
-        <span className="w-2 h-2 rounded-full bg-[#B45309]" />
-        <span>Menunggu Konfirmasi</span>
-      </div>
-    );
-  }
-
-  if (status === "EN_ROUTE" || status === "CODE_RED" || status === "CODE_YELLOW") {
-    return (
-      <div className="pointer-events-auto flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full bg-[#0F766E] text-white shadow-sm text-[11px] md:text-xs font-semibold">
-        <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-        <span>Green Wave Aktif</span>
-      </div>
-    );
-  }
-
-  if (status === "ARRIVED") {
-    return (
-      <div className="pointer-events-auto flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full border border-[#0F766E]/30 bg-[#ECFDF5] text-[#065F46] shadow-sm text-[11px] md:text-xs font-semibold">
-        <span className="w-2 h-2 rounded-full bg-[#0F766E]" />
-        <span>Tiba di Tujuan</span>
-      </div>
-    );
-  }
-
-  // Default: STANDBY / IDLE
-  return (
-    <div className="pointer-events-auto flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full border border-[#D8E0EA] bg-white/90 text-[#334155] shadow-sm text-[11px] md:text-xs font-semibold">
-      <span className="w-2 h-2 rounded-full bg-[#738396]" />
-      <span>Siaga di Pangkalan</span>
-    </div>
-  );
-}
+// ─── KOMPONEN UTAMA DRIVER KIOSK ──────────────────────────────────────────────
 
 export default function DriverKiosk() {
   const {
@@ -65,7 +26,7 @@ export default function DriverKiosk() {
   } = useCore();
   const { addToast } = useToast();
 
-  // 1. Cari ambulans yang sedang disorot POV
+  // 1. CARI AMBULANS YANG SEDANG DISOROT
   const activeAmb = useMemo(() => {
     return (
       state.ambulances.find((a) => a.id === state.activeAmbulanceId) ||
@@ -97,17 +58,14 @@ export default function DriverKiosk() {
 
   // State terpisah untuk UI Text yang di-throttle (1 detik sekali) dari WebGL Loop
   const [hud, setHUD] = useState<HUDUpdateData>({
-    eta: "--:--",
+    eta: "MENUNGGU INSTRUKSI DISPATCH",
     distanceKm: "--",
     speedKmh: 0,
     progress: activeAmb?.progress ?? 0,
   });
 
-  // Toggle model visual marker: 'ambulance' atau 'arrow' (default 'arrow')
+  // Toggle model visual marker: 'ambulance' atau 'arrow' (default 'arrow' Google Maps style)
   const [markerModel, setMarkerModel] = useState<"ambulance" | "arrow">("arrow");
-
-  // State lipat POV HUD (default terbuka)
-  const [isPovCollapsed, setIsPovCollapsed] = useState(false);
 
   const handleHUDUpdate = useCallback((data: HUDUpdateData) => {
     setHUD(data);
@@ -115,7 +73,7 @@ export default function DriverKiosk() {
 
   const handleReset = useCallback(() => {
     setHUD({
-      eta: "--:--",
+      eta: "MENUNGGU INSTRUKSI DISPATCH",
       distanceKm: "--",
       speedKmh: 0,
       progress: 0,
@@ -125,21 +83,22 @@ export default function DriverKiosk() {
 
   const isStandby = !activeAmb || activeAmb.status === "STANDBY" || activeAmb.status === "IDLE";
   const isDispatchedWaiting = activeAmb?.status === "DISPATCHED_WAITING";
-  const isEnRoute = activeAmb?.status === "EN_ROUTE" || activeAmb?.status === "CODE_RED" || activeAmb?.status === "CODE_YELLOW";
+  const isEnRoute = activeAmb?.status === "EN_ROUTE" || activeAmb?.status === "CODE_RED";
+  const isCodeYellow = activeAmb?.status === "CODE_YELLOW";
   const isArrived = activeAmb?.status === "ARRIVED";
 
   const etaDisplay = isStandby
-    ? "--:--"
+    ? "MENUNGGU INSTRUKSI DISPATCH"
     : isDispatchedWaiting
-    ? "Siap"
+    ? "SIAP - MENUNGGU DRIVER"
     : isArrived
-    ? "Tiba"
+    ? "TIBA DI RUMAH SAKIT"
     : hud.eta;
 
   const distanceDisplay = isStandby
-    ? "-- KM"
+    ? "-- KM (STANDBY)"
     : isDispatchedWaiting
-    ? `${routeTotalKm.toFixed(2)} KM`
+    ? `${routeTotalKm.toFixed(2)} KM (READY)`
     : isArrived
     ? "0.00 KM"
     : `${hud.distanceKm} KM`;
@@ -151,170 +110,265 @@ export default function DriverKiosk() {
     : Math.round(hud.progress * 100);
 
   return (
-    <div className="relative h-[calc(100dvh-5.5rem)] md:h-[calc(100dvh-3.5rem)] w-full overflow-hidden bg-[#F4F6F8] flex flex-col font-sans select-none">
-      {/* ── AREA PETA FULL-BLEED ── */}
-      <div className="relative flex-1 w-full min-h-0">
+    <div className="relative h-[calc(100vh-4rem)] overflow-hidden bg-slate-50 text-slate-900 select-none font-sans">
+      <div className="flex flex-col h-full">
+        {/* HEADER: Banner Atas Berdasarkan Status Ambulans & CallSign */}
+        <div className="shrink-0 flex items-center justify-between px-6 py-3 border-b border-slate-200/60 bg-white/85 backdrop-blur-md shadow-xs z-10">
+          <div className="flex items-center gap-3">
+            {isStandby ? (
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium text-xs bg-slate-100 border border-slate-200/80 text-slate-600">
+                <span className="w-2 h-2 rounded-full bg-slate-400" />
+                <span>STANDBY - MENUNGGU DISPATCH</span>
+              </div>
+            ) : isDispatchedWaiting ? (
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium text-xs bg-amber-50 border border-amber-300 text-amber-800 shadow-xs animate-pulse">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                <span>DISPATCH DITERIMA — MENUNGGU KONFIRMASI DRIVER</span>
+              </div>
+            ) : isEnRoute ? (
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium text-xs bg-red-50 border border-red-300 text-red-700 shadow-xs animate-pulse">
+                <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
+                <span>EN ROUTE — C.O.R.E. AKTIF</span>
+              </div>
+            ) : isCodeYellow ? (
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium text-xs bg-amber-50 border border-amber-300 text-amber-700 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                <span>CODE YELLOW — CLEARANCE</span>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium text-xs bg-emerald-50 border border-emerald-200 text-emerald-700 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                <span>TIBA DI RUMAH SAKIT</span>
+              </div>
+            )}
 
-        {/* ── OVERLAY KIRI ATAS: FLEET POV SWITCHER (CARD KACA / CHIP) ── */}
-        <div className="absolute top-3 left-3 z-20 pointer-events-none">
-          {isPovCollapsed ? (
-            <button
-              type="button"
-              onClick={() => setIsPovCollapsed(false)}
-              className="pointer-events-auto flex items-center gap-2 px-3 py-1.5 bg-white/90 backdrop-blur-md border border-[#D8E0EA] rounded-lg shadow-sm text-xs font-semibold text-[#0F172A] hover:bg-[#F8FAFC] transition-all cursor-pointer"
-            >
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: activeAmb?.color || "#0B5D7A" }}
-              />
-              <span>POV: {activeAmb?.callSign ?? "AMB-01"}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-[#556578]" />
-            </button>
-          ) : (
-            <div className="pointer-events-auto w-[calc(100vw-1.5rem)] sm:w-[252px] max-w-[252px] bg-white/90 backdrop-blur-md border border-[#D8E0EA] rounded-xl shadow-[0_8px_24px_rgba(15,23,42,0.08)] p-3 flex flex-col gap-2.5">
-              {/* Header Kartu */}
-              <div className="flex items-center justify-between border-b border-[#D8E0EA]/70 pb-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#072F5F] animate-pulse shrink-0" />
-                  <span className="text-[10px] font-bold tracking-wider uppercase text-[#072F5F]">
-                    FLEET POV
+            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 bg-slate-100/80 px-3 py-1 rounded-full border border-slate-200/60">
+              <span className="text-[11px] font-semibold tracking-widest uppercase text-slate-400">KORIDOR:</span>
+              <span className="text-blue-600 font-semibold">SALEMBA RAYA (RSCM)</span>
+            </div>
+          </div>
+
+          <div className="text-right">
+            <div className="text-2xl font-bold text-slate-800 tracking-tight leading-none">
+              {activeAmb?.callSign ?? "AMB-01"}
+            </div>
+            <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+              {activeAmb?.location
+                ? `${activeAmb.location.lat.toFixed(4)}°S, ${activeAmb.location.lng.toFixed(4)}°E`
+                : "Tracking 60 FPS"}
+            </div>
+          </div>
+        </div>
+
+        {/* Linear Progress Bar for activeAmb */}
+        <div className="w-full bg-slate-200/60 h-1 relative overflow-hidden">
+          <div
+            className={`h-full transition-all duration-300 ${
+              isStandby || isDispatchedWaiting
+                ? "bg-slate-300 w-0"
+                : "bg-gradient-to-r from-red-500 via-amber-400 to-emerald-500"
+            }`}
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+
+        {/* AREA PETA DENGAN FLOATING HUD POV SELECTOR */}
+        <div className="relative flex-1 min-h-0 p-2 sm:p-3">
+          {/* PANEL HUD POV SELECTOR MENGAMBANG (SUDUT KIRI ATAS - GLASSMORPHISM) */}
+          <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 max-w-xs pointer-events-none">
+            <div className="bg-white/85 backdrop-blur-md border border-white/40 text-slate-900 rounded-2xl p-3.5 shadow-lg pointer-events-auto">
+              <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-200/50">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+                  <span className="text-[11px] font-semibold tracking-widest uppercase text-slate-700">
+                    C.O.R.E. FLEET POV
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-[#EEF2F6] text-[#556578]">
-                    {state.ambulances.length} UNITS
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsPovCollapsed(true)}
-                    className="p-1 text-[#556578] hover:text-[#0F172A] hover:bg-[#EEF2F6] rounded transition-colors cursor-pointer"
-                    title="Lipat Menu POV"
-                  >
-                    <ChevronUp className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200/60 text-blue-700">
+                  {state.ambulances.length} UNITS
+                </span>
               </div>
 
-              {/* Daftar Unit AMB-01 s/d AMB-03 */}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1.5 max-h-56 overflow-y-auto pr-1">
                 {state.ambulances.map((amb) => {
-                  const isSelected = amb.id === activeAmb?.id;
+                  const isActive = amb.id === activeAmb?.id;
+                  const ambWaiting = amb.status === "DISPATCHED_WAITING";
+                  const ambEnRoute = amb.status === "EN_ROUTE" || amb.status === "CODE_RED";
+
                   return (
                     <button
                       key={amb.id}
-                      type="button"
                       onClick={() => {
                         setActiveAmbulanceId(amb.id);
                         selectAmb(amb.id);
                       }}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-[#E6F4F8] border border-[#0B5D7A]/30 text-[#0F172A]"
-                          : "hover:bg-white/80 border border-transparent text-[#556578]"
+                      className={`flex items-center justify-between p-2 rounded-xl text-left transition-all duration-200 cursor-pointer ${
+                        isActive
+                          ? "bg-blue-50/80 border-transparent shadow-inner text-slate-900"
+                          : "bg-white/60 border border-slate-200/60 hover:bg-white/90 text-slate-700 shadow-xs"
                       }`}
                     >
-                      <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center gap-2">
                         <span
-                          className="w-2 h-2 rounded-full shrink-0"
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
                           style={{
-                            backgroundColor: amb.color || (isSelected ? "#0B5D7A" : "#738396"),
+                            backgroundColor: amb.color || (isActive ? "#2563EB" : "#94A3B8"),
                           }}
                         />
-                        <span className={`text-xs ${isSelected ? "font-bold text-[#0B5D7A]" : "font-medium text-[#0F172A]"}`}>
-                          {amb.callSign}
-                        </span>
+                        <div>
+                          <div className="text-xs font-semibold text-slate-900">
+                            POV: {amb.callSign}
+                          </div>
+                          <div className="text-[10px] text-slate-500 truncate max-w-[120px]">
+                            {amb.hospitalName || "RSUD Dr. Cipto"}
+                          </div>
+                        </div>
                       </div>
 
-                      <StatusBadge status={amb.status} size="sm" showDot={false} />
+                      <div className="text-right shrink-0">
+                        {isActive ? (
+                          <span className="bg-emerald-50 text-emerald-600 border border-emerald-200 font-medium px-2 py-0.5 rounded-full text-[10px]">
+                            TRACKING
+                          </span>
+                        ) : ambWaiting ? (
+                          <span className="bg-amber-50 text-amber-700 border border-amber-200 font-medium px-2 py-0.5 rounded-full text-[10px] animate-pulse">
+                            DISPATCHED
+                          </span>
+                        ) : ambEnRoute ? (
+                          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium px-2 py-0.5 rounded-full text-[10px]">
+                            EN ROUTE
+                          </span>
+                        ) : (
+                          <span className="bg-slate-100 text-slate-600 font-medium px-2 py-0.5 rounded-full text-[10px]">
+                            STANDBY
+                          </span>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Toggle Model Kendaraan */}
-              <div className="pt-2 border-t border-[#D8E0EA]/70 flex flex-col gap-1.5">
-                <div className="flex items-center justify-between text-[10px] font-bold text-[#556578] uppercase tracking-wider">
-                  <span>Model Kendaraan</span>
+              {/* ── TOGGLE MODEL MARKER: AMBULANS vs PANAH NAVIGASI ── */}
+              <div className="mt-2.5 pt-2 border-t border-slate-200/50">
+                <div className="text-[11px] font-semibold tracking-widest uppercase text-slate-500 mb-1.5 flex items-center justify-between">
+                  <span>MODEL KENDARAAN:</span>
+                  <span className="text-blue-600 text-[10px] font-bold">
+                    {markerModel === "ambulance" ? "Ambulans 3D" : "Panah Nav"}
+                  </span>
                 </div>
-                <SegmentedControl
-                  fullWidth
-                  size="sm"
-                  value={markerModel}
-                  onChange={(val) => setMarkerModel(val as "ambulance" | "arrow")}
-                  options={[
-                    { value: "ambulance", label: "Ambulans 3D" },
-                    { value: "arrow", label: "Panah Nav" },
-                  ]}
-                />
+                <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100/80 rounded-xl border border-slate-200/60">
+                  <button
+                    type="button"
+                    onClick={() => setMarkerModel("ambulance")}
+                    className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      markerModel === "ambulance"
+                        ? "bg-white text-red-600 shadow-xs border border-slate-200/80 font-bold"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                    }`}
+                  >
+                    <span>🚑</span>
+                    <span>Ambulans</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMarkerModel("arrow")}
+                    className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      markerModel === "arrow"
+                        ? "bg-white text-blue-600 shadow-xs border border-slate-200/80 font-bold"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                    }`}
+                  >
+                    <span>➤</span>
+                    <span>Panah Nav</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
 
-        {/* ── OVERLAY KANAN ATAS: FLOATING STATUS CHIP KONTEKSTUAL ── */}
-        <div className="absolute top-3 right-3 z-20 pointer-events-none">
-          <ContextualStatusChip status={activeAmb?.status} />
-        </div>
-
-        {/* ── PETA 3D COCKPIT (MAPBOX WEBGL) ── */}
-        <DriverMockMap
-          startPos={startPos}
-          onHUDUpdate={handleHUDUpdate}
-          markerModel={markerModel}
-        />
-      </div>
-
-      {/* ── UNIFIED BOTTOM COCKPIT DOCK (RESPONSIF MOBILE / DESKTOP) ── */}
-      <div className="shrink-0 h-auto md:h-20 bg-white/95 backdrop-blur-md border-t border-[#D8E0EA] px-3.5 py-2.5 md:py-0 md:px-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 md:gap-6 z-20 shadow-lg pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-0">
-
-        {/* Baris Atas Mobile / Sektor Kiri & Tengah Desktop */}
-        <div className="flex items-center justify-between gap-3 md:contents">
-          {/* Sektor Kiri: Tujuan Medis & Koridor */}
-          <div className="flex flex-col justify-center min-w-0 max-w-[190px] md:max-w-[280px]">
-            <div className="text-[9px] md:text-[10px] font-bold tracking-wider uppercase text-[#556578] mb-0.5 truncate">
-              TUJUAN MEDIS
-            </div>
-            <div className="text-xs md:text-sm font-bold text-[#0F172A] leading-tight truncate">
-              {activeAmb?.hospitalName || "RSUD Dr. Cipto Mangunkusumo"}
-            </div>
-            <div className="text-[10px] md:text-[11px] text-[#556578] font-medium mt-0.5 truncate">
-              Salemba Raya · {poolRoute.startName?.split(" ")[0] || "Matraman"}
+              <div className="mt-2 pt-2 border-t border-slate-200/50 flex items-center justify-between text-[10px] text-slate-500 font-medium">
+                <span>Klik unit untuk ganti POV</span>
+                <span className="text-blue-600 font-semibold">60 FPS WebGL</span>
+              </div>
             </div>
           </div>
 
-          {/* Sektor Tengah: ETA dan Sisa Jarak Berdampingan */}
-          <div className="flex items-center gap-3 md:gap-6 px-2.5 md:px-4 py-1 md:py-1.5 rounded-lg bg-[#F8FAFC] border border-[#D8E0EA]/60 shrink-0">
-            {/* ETA */}
-            <div className="flex flex-col items-center">
-              <div className="text-[9px] md:text-[10px] font-bold tracking-wider uppercase text-[#556578] flex items-center gap-1 mb-0.5">
-                <Clock className="w-2.5 h-2.5 md:w-3 md:h-3 text-[#738396]" />
-                <span>ETA</span>
+          {/* PETA 3D COCKPIT DENGAN 60 FPS WEBGL DIRECT BUFFERING */}
+          <DriverMockMap
+            startPos={startPos}
+            onHUDUpdate={handleHUDUpdate}
+            markerModel={markerModel}
+          />
+        </div>
+
+        {/* PANEL NAVIGASI BAWAH (GLASSMORPHISM APPLE MAPS STYLE) */}
+        <div className="shrink-0 px-6 pb-4 pt-3 bg-white/85 backdrop-blur-md border-t border-white/40 shadow-lg space-y-3 z-10">
+          <div className="grid grid-cols-3 gap-3 text-center">
+            {/* Kartu Tujuan Medis */}
+            <div className="bg-white/70 backdrop-blur-sm border border-slate-200/60 p-2.5 rounded-xl shadow-xs">
+              <div className="text-[11px] font-semibold tracking-widest uppercase text-slate-500 mb-0.5">
+                Tujuan Medis
               </div>
-              <div className="text-sm md:text-xl font-extrabold text-[#0F172A] telemetry-num font-mono">
+              <div className="text-sm sm:text-base font-bold text-slate-800 leading-tight truncate">
+                {activeAmb?.hospitalName || "RSUD Dr. Cipto"}
+              </div>
+              <div className="text-[10px] text-slate-500 mt-0.5 truncate font-medium">
+                {poolRoute.startName || "Jl. Salemba Raya"}
+              </div>
+            </div>
+
+            {/* Kartu ETA */}
+            <div
+              className={`p-2.5 rounded-xl border backdrop-blur-sm shadow-xs ${
+                isStandby
+                  ? "bg-white/70 border-slate-200/60"
+                  : isDispatchedWaiting
+                  ? "bg-amber-50/80 border-amber-200"
+                  : isEnRoute
+                  ? "bg-red-50/80 border-red-200"
+                  : isArrived
+                  ? "bg-emerald-50/80 border-emerald-200"
+                  : "bg-amber-50/80 border-amber-200"
+              }`}
+            >
+              <div className="text-[11px] font-semibold tracking-widest uppercase text-slate-500 mb-0.5">
+                <Clock className="inline w-3 h-3 mr-1 text-slate-400" />
+                Estimasi Tiba (ETA)
+              </div>
+              <div
+                className={`tracking-tight ${
+                  isStandby || isDispatchedWaiting
+                    ? "text-xs sm:text-xs text-amber-700 font-semibold py-1"
+                    : isArrived
+                    ? "text-2xl font-bold text-emerald-600"
+                    : "text-2xl font-bold text-red-600"
+                }`}
+              >
                 {etaDisplay}
               </div>
             </div>
 
-            {/* Garis Pemisah Vertikal Tipis */}
-            <div className="h-6 md:h-8 w-px bg-[#D8E0EA]" />
-
-            {/* Sisa Jarak */}
-            <div className="flex flex-col items-center">
-              <div className="text-[9px] md:text-[10px] font-bold tracking-wider uppercase text-[#556578] mb-0.5">
-                JARAK
+            {/* Kartu Sisa Jarak */}
+            <div className="bg-white/70 backdrop-blur-sm border border-slate-200/60 p-2.5 rounded-xl shadow-xs">
+              <div className="text-[11px] font-semibold tracking-widest uppercase text-slate-500 mb-0.5">
+                Sisa Jarak
               </div>
-              <div className="text-sm md:text-xl font-extrabold text-[#0F172A] telemetry-num font-mono">
+              <div className="text-2xl font-bold text-slate-800 tracking-tight">
                 {distanceDisplay}
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Sektor Kanan: Slot Aksi Tunggal Kontekstual */}
-        <div className="flex items-center justify-end w-full md:w-auto md:min-w-[220px] md:max-w-[300px]">
-          {isDispatchedWaiting ? (
+          {/* 1. Status Standby */}
+          {isStandby && (
+            <div className="w-full py-3 px-4 rounded-xl font-medium text-xs sm:text-sm tracking-normal flex items-center justify-center gap-2 border border-slate-200/60 text-slate-600 bg-white/70 backdrop-blur-sm shadow-xs">
+              <Radio className="w-4 h-4 text-blue-600 animate-pulse shrink-0" />
+              <span>{activeAmb?.callSign} STANDBY DI PANGKALAN · Menunggu Dispatch dari Command Center</span>
+            </div>
+          )}
+
+          {/* 2. Tombol Besar Berkedip: TERIMA & MULAI JALAN (DISPATCHED_WAITING) */}
+          {isDispatchedWaiting && (
             <button
-              type="button"
               onClick={() => {
                 if (activeAmb) {
                   startJourney(activeAmb.id);
@@ -326,53 +380,43 @@ export default function DriverKiosk() {
                   });
                 }
               }}
-              className="w-full md:w-auto flex items-center justify-center gap-2 py-2 md:py-2.5 px-4 md:px-5 rounded-lg font-bold text-xs whitespace-nowrap bg-[#C81E1E] hover:bg-[#B91C1C] text-white shadow-sm active:scale-[0.99] transition-all cursor-pointer animate-pulse"
+              className="w-full py-3.5 px-6 rounded-xl font-bold text-base sm:text-lg tracking-wide flex items-center justify-center gap-3 bg-gradient-to-b from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-md hover:shadow-lg active:scale-[0.99] transition-all border border-red-600/80 cursor-pointer animate-pulse"
             >
-              <Play className="w-3.5 h-3.5 fill-white" />
+              <Play className="w-5 h-5 fill-white" />
               <span>TERIMA &amp; MULAI JALAN</span>
+              <span className="text-xs font-semibold bg-red-800/60 px-2.5 py-0.5 rounded-full border border-red-400/40">
+                CODE RED DISPATCH
+              </span>
             </button>
-          ) : isEnRoute ? (
-            <div className="flex flex-col w-full gap-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[10px] font-bold text-[#0F766E] uppercase tracking-wide flex items-center gap-1">
-                  <Navigation className="w-3 h-3 animate-pulse" />
-                  <span>EN ROUTE</span>
-                </span>
-                <span className="font-mono font-bold telemetry-num text-[#0F172A] text-xs">
-                  {progressPercent}%
-                </span>
-              </div>
-              {/* Progress bar ramping */}
-              <div className="w-full bg-[#EEF2F6] h-1.5 rounded-full overflow-hidden border border-[#D8E0EA]/60">
-                <div
-                  className="h-full bg-[#0F766E] transition-all duration-300 rounded-full"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
+          )}
+
+          {/* 3. Status En Route */}
+          {isEnRoute && (
+            <div className="w-full py-3 px-4 rounded-xl font-semibold text-sm sm:text-base tracking-normal flex items-center justify-center gap-3 border border-red-200/80 text-red-700 bg-red-50/80 backdrop-blur-sm shadow-xs">
+              <Navigation className="w-4 h-4 animate-pulse text-red-600" />
+              <span>{activeAmb?.callSign} EN ROUTE MENUJU {activeAmb?.hospitalName || "RSUD Dr. Cipto"}</span>
+              <span className="text-xs font-bold bg-red-200 text-red-800 px-2 py-0.5 rounded-md ml-1">
+                {progressPercent}%
+              </span>
             </div>
-          ) : isArrived ? (
-            <div className="flex items-center justify-between md:justify-end gap-3 w-full">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#065F46]">
-                <CheckCircle className="w-4 h-4 text-[#0F766E]" />
-                <span>Tiba di RS</span>
+          )}
+
+          {/* 4. Status Tiba di Rumah Sakit */}
+          {isArrived && (
+            <div className="flex items-center justify-between gap-3 p-2.5 bg-emerald-50/80 backdrop-blur-sm border border-emerald-200/80 rounded-xl shadow-xs">
+              <div className="flex items-center gap-2 text-emerald-800 text-sm font-semibold pl-2">
+                <CheckCircle className="w-5 h-5 text-emerald-600" />
+                <span>{activeAmb?.callSign} TELAH TIBA DI RUMAH SAKIT</span>
               </div>
               <button
-                type="button"
                 onClick={handleReset}
-                className="px-3.5 py-1.5 bg-white border border-[#D8E0EA] hover:bg-[#F8FAFC] text-[#0F172A] font-semibold text-xs rounded-lg transition-all shadow-xs cursor-pointer"
+                className="px-4 py-2 bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-xs rounded-xl transition-all shadow-xs cursor-pointer"
               >
                 Selesai &amp; Reset
               </button>
             </div>
-          ) : (
-            /* STANDBY / IDLE */
-            <div className="flex items-center justify-center gap-2 text-xs text-[#556578] font-medium bg-[#EEF2F6] px-3.5 py-1.5 md:py-2 rounded-lg border border-[#D8E0EA]/70 w-full md:w-auto">
-              <Radio className="w-3.5 h-3.5 text-[#072F5F] shrink-0" />
-              <span>Siaga di Pangkalan</span>
-            </div>
           )}
         </div>
-
       </div>
     </div>
   );

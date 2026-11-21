@@ -1,36 +1,59 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useCore } from "@/context/CoreContext";
 import {
   MonitorDot,
   Tablet,
   Activity,
+  Siren,
+  Wifi,
 } from "lucide-react";
-import StatusBadge from "@/components/ui/StatusBadge";
 
 type Mode = "command" | "driver" | "simulation";
 
-const MODES: { id: Mode; label: string; mobileLabel: string; Icon: React.ElementType }[] = [
+const MODES: { id: Mode; label: string; sublabel: string; Icon: React.ElementType }[] = [
   {
-    id: "command",
-    label: "Command Center",
-    mobileLabel: "Command",
-    Icon: MonitorDot,
+    id:       "command",
+    label:    "Command Center",
+    sublabel: "Operator RS",
+    Icon:     MonitorDot,
   },
   {
-    id: "driver",
-    label: "Driver Kiosk",
-    mobileLabel: "Kiosk",
-    Icon: Tablet,
+    id:       "driver",
+    label:    "Driver Kiosk",
+    sublabel: "Layar Supir",
+    Icon:     Tablet,
   },
   {
-    id: "simulation",
-    label: "Live Simulation",
-    mobileLabel: "Simulasi",
-    Icon: Activity,
+    id:       "simulation",
+    label:    "Live Simulation",
+    sublabel: "Traffic Engine",
+    Icon:     Activity,
   },
 ];
+
+function StatusPulse({ code }: { code: string }) {
+  const isActive = code !== "IDLE";
+  return (
+    <span className="flex items-center gap-1.5 text-xs bg-slate-100 px-3 py-1 rounded-full border border-slate-200/60 font-medium">
+      <span className={`w-2 h-2 rounded-full ${
+        code === "CODE_RED"    ? "bg-red-500 animate-pulse" :
+        code === "CODE_YELLOW" ? "bg-amber-500 animate-pulse" :
+        code === "EN_ROUTE"    ? "bg-emerald-500 animate-pulse" :
+        code === "ARRIVED"     ? "bg-blue-500" :
+        "bg-slate-400"
+      }`} />
+      <span className={isActive ? "text-slate-900 font-semibold" : "text-slate-500"}>
+        {code === "IDLE"         ? "STANDBY"       :
+         code === "CODE_RED"     ? "⚡ CODE RED"    :
+         code === "CODE_YELLOW"  ? "⚠ CODE YELLOW" :
+         code === "EN_ROUTE"     ? "🚑 EN ROUTE"   :
+         "✓ ARRIVED"}
+      </span>
+    </span>
+  );
+}
 
 function LiveClock() {
   const [time, setTime] = useState("");
@@ -44,7 +67,7 @@ function LiveClock() {
   }, []);
 
   return (
-    <span className="telemetry-num text-xs text-[#556578] hidden lg:block bg-[#EEF2F6] px-2.5 py-1 rounded-md border border-[#D8E0EA]">
+    <span className="font-mono text-xs text-slate-500 hidden lg:block tabular-nums bg-slate-100/80 px-2.5 py-1 rounded-lg border border-slate-200/60">
       {time}
     </span>
   );
@@ -53,123 +76,70 @@ function LiveClock() {
 export default function Navbar() {
   const { state, setMode } = useCore();
 
-  // Status kanan dibaca secara read-only langsung dari armada ambulans
-  // Sinkron dengan unit yang sedang aktif di Driver Kiosk / Command Center
-  const activeAmb = useMemo(() => {
-    return (
-      state.ambulances.find((a) => a.id === state.activeAmbulanceId && a.active) ||
-      state.ambulances.find((a) => a.status === "EN_ROUTE" || a.status === "CODE_RED") ||
-      state.ambulances.find((a) => a.status === "DISPATCHED_WAITING") ||
-      state.ambulances.find((a) => a.status === "CODE_YELLOW") ||
-      state.ambulances.find((a) => a.id === state.selectedAmbId) ||
-      state.ambulances[0]
-    );
-  }, [state.ambulances, state.activeAmbulanceId, state.selectedAmbId]);
-
-  const effectiveStatus = activeAmb ? activeAmb.status : state.dispatchCode;
-  const isStandby = !activeAmb || effectiveStatus === "STANDBY" || effectiveStatus === "IDLE";
-
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-[5.5rem] md:h-14 bg-white border-b border-[#D8E0EA] flex flex-col md:flex-row md:items-center md:justify-between px-3 md:px-5 shadow-xs select-none">
-      {/* ── BARIS ATAS (Mobile: h-12 w-full flex items-center justify-between | Desktop: md:h-auto md:w-auto md:flex) ── */}
-      <div className="h-12 md:h-auto w-full md:w-auto flex items-center justify-between md:justify-start gap-3">
-        {/* Brand & Logo */}
-        <div className="flex items-center gap-2.5 md:gap-3">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-16
+                    bg-white/85 backdrop-blur-md
+                    border-b border-slate-200/60
+                    flex items-center justify-between px-6
+                    shadow-xs">
+
+      {/* Brand & Logo */}
+      <div className="flex items-center gap-4 select-none">
+        <div className="relative flex items-center shrink-0">
           <img
             src="/image_36.png"
             alt="C.O.R.E. Logo"
-            className="h-7 md:h-8 w-auto object-contain cursor-pointer"
+            className="h-10 w-auto object-contain cursor-pointer"
           />
-          <div className="border-l border-[#D8E0EA] pl-2.5 hidden lg:block">
-            <div className="text-[11px] font-bold text-[#556578] tracking-wider uppercase leading-tight">
-              City Optimized Rescue Edge
-            </div>
-            <div className="text-[9px] text-[#738396] font-mono leading-none mt-0.5">
-              Clearance Optimization &amp; Routing Engine
-            </div>
-          </div>
+          {state.dispatchCode !== "IDLE" && (
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping border-2 border-white" />
+          )}
         </div>
 
-        {/* Telemetry Status Right (Mobile view: floats on top bar right) */}
-        <div className="flex items-center gap-1.5 md:hidden">
-          <StatusBadge
-            status={effectiveStatus}
-            prefix={!isStandby && activeAmb ? activeAmb.callSign : undefined}
-            size="sm"
-          />
-          <div className="flex items-center gap-1 text-xs text-[#065F46] font-medium bg-[#ECFDF5] px-2 py-1 rounded-full border border-[#0F766E]/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E] shrink-0" />
-            <span className="hidden sm:inline font-mono tracking-tight text-[11px]">EDGE</span>
+        <div className="border-l-2 border-slate-200 pl-4 hidden sm:block">
+          <div className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest leading-tight max-w-[160px]">
+            CITY OPTIMIZED RESCUE EDGE
           </div>
         </div>
       </div>
 
-      {/* ── DESKTOP ONLY: 3-Mode Segmented Tabs (Centered) ── */}
-      <div className="hidden md:flex items-center bg-[#EEF2F6] p-0.5 rounded-lg border border-[#D8E0EA]/70">
-        {MODES.map(({ id, label, Icon }) => {
+      {/* 3-Mode Segmented Tabs */}
+      <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/60">
+        {MODES.map(({ id, label, sublabel, Icon }) => {
           const isActive = state.activeMode === id;
           return (
             <button
               key={id}
-              type="button"
               onClick={() => setMode(id)}
               className={`
-                flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs transition-all duration-150 cursor-pointer
-                ${
-                  isActive
-                    ? "bg-white text-[#072F5F] shadow-xs font-semibold"
-                    : "text-[#556578] hover:text-[#0F172A] hover:bg-white/50 font-medium"
+                flex items-center gap-2.5 px-4 py-1.5 rounded-lg
+                transition-all duration-200 cursor-pointer
+                ${isActive
+                  ? "bg-white text-blue-600 shadow-xs font-semibold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60 font-medium"
                 }
               `}
             >
-              <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#072F5F]" : "text-[#738396]"}`} />
-              <span>{label}</span>
+              <Icon className="w-4 h-4 shrink-0" strokeWidth={isActive ? 2.2 : 1.7} />
+              <div className="text-left hidden md:block">
+                <div className="text-xs font-semibold leading-tight">{label}</div>
+                <div className={`text-[10px] leading-none mt-0.5 ${
+                  isActive ? "text-blue-500" : "text-slate-400"
+                }`}>{sublabel}</div>
+              </div>
             </button>
           );
         })}
       </div>
 
-      {/* ── DESKTOP ONLY: Telemetry Status Right ── */}
-      <div className="hidden md:flex items-center gap-2.5">
-        <StatusBadge
-          status={effectiveStatus}
-          prefix={!isStandby && activeAmb ? activeAmb.callSign : undefined}
-          size="sm"
-        />
-
-        <div className="flex items-center gap-1.5 text-xs text-[#065F46] font-medium bg-[#ECFDF5] px-2.5 py-1 rounded-full border border-[#0F766E]/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E] shrink-0" />
-          <span className="hidden sm:inline font-mono tracking-tight text-[11px]">EDGE ONLINE</span>
+      {/* Telemetry Status Bar */}
+      <div className="flex items-center gap-3">
+        <StatusPulse code={state.dispatchCode} />
+        <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-medium bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
+          <Wifi className="w-3.5 h-3.5 text-emerald-600" />
+          <span className="hidden sm:inline font-mono">EDGE ONLINE</span>
         </div>
-
         <LiveClock />
-      </div>
-
-      {/* ── BARIS BAWAH (Mobile Only: h-10 w-full pb-1.5 3-Tab Segmented Track) ── */}
-      <div className="h-10 w-full flex items-center pb-1.5 md:hidden">
-        <div className="grid grid-cols-3 w-full bg-[#EEF2F6] p-0.5 rounded-lg border border-[#D8E0EA]/70">
-          {MODES.map(({ id, mobileLabel, Icon }) => {
-            const isActive = state.activeMode === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setMode(id)}
-                className={`
-                  flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs transition-all duration-150 cursor-pointer
-                  ${
-                    isActive
-                      ? "bg-white text-[#072F5F] shadow-xs font-semibold"
-                      : "text-[#556578] hover:text-[#0F172A] hover:bg-white/50 font-medium"
-                  }
-                `}
-              >
-                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#072F5F]" : "text-[#738396]"}`} />
-                <span className="truncate">{mobileLabel}</span>
-              </button>
-            );
-          })}
-        </div>
       </div>
     </nav>
   );

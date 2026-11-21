@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   typescript: {
+    // Typecheck is run via `tsc --noEmit`
     ignoreBuildErrors: true,
   },
   turbopack: {

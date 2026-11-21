@@ -26,13 +26,7 @@ import {
   Navigation2,
   Plus,
   Eye,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  X,
 } from "lucide-react";
-import SegmentedControl from "@/components/ui/SegmentedControl";
-import StatusBadge from "@/components/ui/StatusBadge";
 import { useToast } from "@/components/ToastProvider";
 import { useCore, type Ambulance as CoreAmbulance, type DispatchCode } from "@/context/CoreContext";
 import { getRandomRoadRoute, ROAD_NETWORK_GEOJSON, ROAD_ROUTES } from "@/utils/RoadNetwork";
@@ -313,11 +307,6 @@ export default function LiveSimulation() {
   const [roadCondition, setRoadCondition] = useState<RoadCondition>("dry");
   const [trafficDensity, setTrafficDensity] = useState<TrafficDensity>("medium");
   const [renderMode, setRenderMode] = useState<"geojson" | "markers">("geojson");
-
-  // State UI Inspector & Advanced Settings
-  const [isInspectorCollapsed, setIsInspectorCollapsed] = useState(false);
-  const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(false);
-  const [showAdvancedRender, setShowAdvancedRender] = useState(false);
 
   // Status Telemetri Real-Time
   const [coreActive, setCoreActive] = useState(false);
@@ -1419,10 +1408,6 @@ export default function LiveSimulation() {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    mapRef.current?.resize();
-  }, [isInspectorCollapsed]);
-
   if (!MAPBOX_TOKEN || MAPBOX_TOKEN.length < 10 || MAPBOX_TOKEN.includes("ISI_TOKEN")) {
     return (
       <div className="relative w-full flex-1 min-h-[600px] flex items-center justify-center bg-red-50 border-2 border-red-400 rounded-xl">
@@ -1435,350 +1420,372 @@ export default function LiveSimulation() {
   }
 
   return (
-    <div className="relative flex flex-col md:flex-row h-[calc(100dvh-5.5rem)] md:h-[calc(100dvh-3.5rem)] w-full overflow-hidden bg-[#F4F6F8] text-[#0F172A] select-none font-sans">
-      {/* ── MOBILE BACKDROP ── */}
-      {isMobileControlsOpen && (
-        <div
-          onClick={() => setIsMobileControlsOpen(false)}
-          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-xs md:hidden"
-        />
-      )}
+    <div className="flex min-h-[calc(100vh-4rem)] w-full bg-[#F4F6F8] text-[#1A1A1A] select-none overflow-hidden font-sans">
+      {/* ── SIDEBAR PENGATURAN SKENARIO REAL-TIME ── */}
+      <aside className="w-80 shrink-0 border-r border-gray-200 bg-white p-4 flex flex-col gap-3 overflow-y-auto shadow-sm">
+        {/* Header Modul */}
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#0055FF] animate-pulse" />
+            <h2 className="text-sm font-bold text-gray-900 tracking-wide uppercase">
+              C.O.R.E. MULTI-FLEET
+            </h2>
+          </div>
+          <p className="text-[11px] text-gray-500 mt-0.5">
+            Manajemen Multi-Armada (Max 8 Unit) · Koridor Salemba Raya
+          </p>
+        </div>
 
-      {/* ── SIDEBAR PENGATURAN SKENARIO REAL-TIME (FLAT ENTERPRISE PANEL / MOBILE BOTTOM SHEET) ── */}
-      {(isMobileControlsOpen || !isInspectorCollapsed) && (
-        <aside
-          className={`
-            bg-white border-[#D8E0EA] flex flex-col p-0 overflow-y-auto transition-transform duration-200
-            ${
-              isMobileControlsOpen
-                ? "fixed inset-x-0 bottom-0 z-40 max-h-[78dvh] rounded-t-2xl shadow-2xl border-t divide-y divide-[#D8E0EA] pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
-                : "hidden"
-            }
-            ${!isInspectorCollapsed ? "md:flex" : "md:hidden"}
-            md:static md:w-[304px] md:shrink-0 md:border-r md:divide-y md:divide-[#D8E0EA] md:max-h-none md:rounded-none md:shadow-none md:border-t-0 md:pb-0
-          `}
-        >
-          {/* Mobile-only sheet header with Grab Handle & Close Button */}
-          <div className="flex items-center justify-between p-3 border-b border-[#D8E0EA] md:hidden relative bg-[#F8FAFC]">
-            <div className="w-10 h-1 rounded-full bg-[#D8E0EA] absolute left-1/2 -translate-x-1/2 top-2" />
-            <div className="flex items-center gap-1.5 pt-1">
-              <span className="w-2 h-2 rounded-full bg-[#072F5F]" />
-              <span className="text-xs font-bold text-[#0F172A] tracking-wide uppercase">
-                KONTROL SIMULASI C.O.R.E.
+        {/* Kontrol Engine & Pengatur Kecepatan Simulasi */}
+        <div className="glass-card p-3 space-y-2.5">
+          <div className="text-[10px] text-gray-400 font-bold tracking-wider uppercase">
+            Kontrol Engine
+          </div>
+
+          <button
+            onClick={() => setRunning((r) => !r)}
+            className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl cursor-pointer font-bold text-xs transition-all active:scale-95 ${
+              running
+                ? "bg-red-50 border border-red-200 text-red-600 hover:bg-red-100"
+                : "bg-emerald-50 border border-emerald-200 text-emerald-600 hover:bg-emerald-100"
+            }`}
+          >
+            {running ? (
+              <>
+                <Square className="w-3.5 h-3.5 fill-current" /> Jeda Simulasi
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5 fill-current" /> Lanjutkan Simulasi
+              </>
+            )}
+          </button>
+
+          {/* Pengatur Kecepatan Simulasi */}
+          <div className="pt-0.5 space-y-1">
+            <div className="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+              <span className="flex items-center gap-1">
+                <Gauge className="w-3 h-3 text-blue-600" /> Kecepatan Simulasi
               </span>
+              <span className="font-mono font-bold text-blue-600">{simSpeed}x Speed</span>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsMobileControlsOpen(false)}
-              className="p-1 rounded-md text-[#556578] hover:text-[#0F172A] hover:bg-[#EEF2F6] transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
+
+            <div className="grid grid-cols-3 gap-1">
+              {[1, 2, 4].map((spd) => (
+                <button
+                  key={spd}
+                  onClick={() => {
+                    setSimSpeed(spd);
+                    stateRef.current.simSpeed = spd;
+                  }}
+                  className={`py-1.5 rounded-lg font-bold text-xs transition-all border ${
+                    simSpeed === spd
+                      ? "bg-blue-600 text-white border-blue-700 shadow-xs"
+                      : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 active:scale-95"
+                  }`}
+                >
+                  {spd}x
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* 1. Header Modul (Desktop view) */}
-          <div className="p-3.5 hidden md:flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#072F5F] animate-pulse shrink-0" />
-              <div>
-                <h2 className="text-xs font-bold text-[#0F172A] tracking-wider uppercase">
-                  C.O.R.E. MULTI-FLEET
-                </h2>
-                <p className="text-[10px] text-[#556578] font-medium mt-0.5">
-                  Manajemen Koridor Salemba Raya
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsInspectorCollapsed(true)}
-              className="p-1 text-[#556578] hover:text-[#0F172A] hover:bg-[#F4F6F8] rounded transition-colors cursor-pointer"
-              title="Lipat Panel"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
+          <button
+            onClick={handleReset}
+            className="w-full flex items-center justify-center gap-2 py-1.5 rounded-xl cursor-pointer text-xs text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all active:scale-95"
+          >
+            <RotateCcw className="w-3 h-3" /> Reset Seluruh Armada & NPC
+          </button>
+        </div>
+
+        {/* ── 3. INJEKSI MULTI-AMBULANCE (HINGGA 8 UNIT AMBULANS) ── */}
+        <div className="glass-card p-3 space-y-2 border-red-200 bg-red-50/25">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-red-600 tracking-wider uppercase">
+              Armada C.O.R.E. AI
+            </span>
+            <span className="text-[9px] font-mono font-bold bg-red-100 text-red-700 px-1.5 py-0.5 rounded">
+              {ambulances.filter((a) => a.active).length} / 8 AKTIF
+            </span>
           </div>
 
-          {/* 2. Kontrol Engine & Kecepatan */}
-          <div className="p-3.5 flex flex-col gap-2.5 shrink-0">
-            <div className="text-[10px] text-[#556578] font-bold tracking-wider uppercase">
-              Kontrol Engine
-            </div>
+          <button
+            onClick={handleSpawnAmbulance}
+            disabled={ambulances.filter((a) => a.active).length >= 8}
+            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl cursor-pointer font-bold transition-all shadow-md active:scale-95 ${
+              ambulances.filter((a) => a.active).length >= 8
+                ? "opacity-50 cursor-not-allowed bg-gray-200 text-gray-500 border border-gray-300"
+                : "bg-red-600 text-white hover:bg-red-700 border border-red-700"
+            }`}
+          >
+            <Plus className="w-4 h-4" />
+            <span className="text-xs font-bold tracking-wide">
+              Spawn Ambulance ({ambulances.filter((a) => a.active).length}/8)
+            </span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setRunning((r) => !r)}
-              className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg cursor-pointer font-semibold text-xs border transition-all ${
-                running
-                  ? "bg-white text-[#C81E1E] border-[#C81E1E]/30 hover:bg-[#FEF2F2]"
-                  : "bg-white text-[#0F766E] border-[#0F766E]/30 hover:bg-[#ECFDF5]"
-              }`}
-            >
-              {running ? (
-                <>
-                  <Square className="w-3.5 h-3.5 fill-current text-[#C81E1E]" />
-                  <span>Jeda Simulasi</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-3.5 h-3.5 fill-current text-[#0F766E]" />
-                  <span>Lanjutkan Simulasi</span>
-                </>
-              )}
-            </button>
-
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between text-[10px] font-bold text-[#556578] uppercase tracking-wider">
+          {/* Quick POV Camera Switcher Pills */}
+          {ambulances.filter((a) => a.active).length > 0 && (
+            <div className="pt-1.5 space-y-1">
+              <div className="flex items-center justify-between text-[9.5px] font-bold text-gray-500 uppercase">
                 <span className="flex items-center gap-1">
-                  <Gauge className="w-3 h-3 text-[#072F5F]" /> Kecepatan
+                  <Camera className="w-3 h-3 text-cyan-600" /> Switch Kamera POV:
+                </span>
+                <span className="text-cyan-700 font-bold">
+                  {cameraMode === "VIEW_ALL"
+                    ? "VIEW ALL"
+                    : activeAmbulance
+                    ? activeAmbulance.callSign
+                    : "NONE"}
                 </span>
               </div>
 
-              <SegmentedControl
-                fullWidth
-                size="sm"
-                value={simSpeed}
-                onChange={(spd) => {
-                  setSimSpeed(spd);
-                  stateRef.current.simSpeed = spd;
-                }}
-                options={[
-                  { value: 1, label: "1x" },
-                  { value: 2, label: "2x" },
-                  { value: 4, label: "4x" },
-                ]}
-              />
+              <div className="grid grid-cols-2 gap-1">
+                {/* Tombol View All (Kamera Bebas) */}
+                <button
+                  type="button"
+                  key="btn-view-all"
+                  onClick={() => handleSelectViewAll()}
+                  className={`py-1.5 px-2 rounded-lg text-[10px] font-bold transition-all flex items-center justify-between border cursor-pointer ${
+                    cameraMode === "VIEW_ALL"
+                      ? "bg-emerald-600 text-white border-emerald-700 shadow-md ring-2 ring-emerald-300 scale-[1.02]"
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100"
+                  }`}
+                >
+                  <span className="flex items-center gap-1 truncate">
+                    <Eye
+                      className={`w-3 h-3 ${
+                        cameraMode === "VIEW_ALL" ? "text-white" : "text-emerald-600"
+                      }`}
+                    />
+                    <span>View All</span>
+                  </span>
+                  <span className="text-[9px] opacity-80 uppercase tracking-wider">
+                    Bebas
+                  </span>
+                </button>
+
+                {ambulances
+                  .filter((a) => a.active)
+                  .map((amb) => {
+                    const isSelected = cameraMode === "POV" && amb.id === activeAmbulanceId;
+                    return (
+                      <button
+                        key={amb.id}
+                        type="button"
+                        onClick={() => handleSelectAmbulance(amb.id)}
+                        className={`py-1.5 px-2 rounded-lg text-[10px] font-bold transition-all flex items-center justify-between border cursor-pointer ${
+                          isSelected
+                            ? "bg-cyan-500 text-white border-cyan-600 shadow-md ring-2 ring-cyan-300 scale-[1.02]"
+                            : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100"
+                        }`}
+                      >
+                        <span className="flex items-center gap-1 truncate">
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ backgroundColor: amb.color }}
+                          />
+                          <span>{amb.callSign}</span>
+                        </span>
+                        <span className="font-mono text-[9px] opacity-80">
+                          {Math.round(amb.progress * 100)}%
+                        </span>
+                      </button>
+                    );
+                  })}
+              </div>
             </div>
+          )}
+        </div>
 
-            <button
-              type="button"
-              onClick={handleReset}
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg cursor-pointer text-xs text-[#556578] hover:text-[#0F172A] hover:bg-[#F4F6F8] border border-[#D8E0EA] transition-all font-medium"
-            >
-              <RotateCcw className="w-3 h-3" /> Reset Seluruh Armada & NPC
-            </button>
-          </div>
-
-          {/* 3. Injeksi Multi-Ambulance (Hingga 8 Unit) */}
-          <div className="p-3.5 flex flex-col gap-2.5 shrink-0">
-            <div className="text-[10px] font-bold text-[#556578] tracking-wider uppercase">
-              Armada C.O.R.E. AI
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSpawnAmbulance}
-              disabled={ambulances.filter((a) => a.active).length >= 8}
-              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-xs whitespace-nowrap transition-all shadow-xs ${
-                ambulances.filter((a) => a.active).length >= 8
-                  ? "opacity-50 cursor-not-allowed bg-gray-200 text-gray-500 border border-gray-300"
-                  : "bg-[#C81E1E] hover:bg-[#B91C1C] text-white cursor-pointer active:scale-[0.99]"
+        {/* PENGATURAN ENGINE RENDER POV 3D */}
+        <div className="glass-card p-3 space-y-2 border-blue-200/80 bg-blue-50/20">
+          <div className="flex items-center justify-between text-[10px] font-bold text-gray-600 tracking-wider uppercase">
+            <span>Engine Render POV 3D</span>
+            <span
+              className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                renderMode === "geojson"
+                  ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
+                  : "bg-blue-100 text-blue-700 border border-blue-300"
               }`}
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Spawn Ambulance ({ambulances.filter((a) => a.active).length}/8)</span>
-            </button>
-
-            {/* Quick POV Camera Switcher */}
-            {ambulances.filter((a) => a.active).length > 0 && (
-              <div className="space-y-1.5 pt-1">
-                <div className="flex items-center justify-between text-[10px] font-bold text-[#556578] uppercase tracking-wider">
-                  <span className="flex items-center gap-1">
-                    <Camera className="w-3 h-3 text-[#072F5F]" /> Switch Kamera POV
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-1.5">
-                  {/* Tombol View All (Kamera Bebas) */}
-                  <button
-                    type="button"
-                    key="btn-view-all"
-                    onClick={() => handleSelectViewAll()}
-                    className={`py-1.5 px-2 rounded-md text-[10.5px] font-bold transition-all flex items-center justify-between border cursor-pointer ${
-                      cameraMode === "VIEW_ALL"
-                        ? "bg-[#E6F4F8] text-[#0B5D7A] border-[#0B5D7A]/50 ring-1 ring-[#0B5D7A]/30"
-                        : "bg-white text-[#556578] border-[#D8E0EA] hover:bg-[#F8FAFC]"
-                    }`}
-                  >
-                    <span className="flex items-center gap-1.5 truncate">
-                      <Eye
-                        className={`w-3 h-3 ${
-                          cameraMode === "VIEW_ALL" ? "text-[#0B5D7A]" : "text-[#738396]"
-                        }`}
-                      />
-                      <span>View All</span>
-                    </span>
-                    <span className="text-[9px] uppercase tracking-wider opacity-75">
-                      Bebas
-                    </span>
-                  </button>
-
-                  {ambulances
-                    .filter((a) => a.active)
-                    .map((amb) => {
-                      const isSelected = cameraMode === "POV" && amb.id === activeAmbulanceId;
-                      return (
-                        <button
-                          key={amb.id}
-                          type="button"
-                          onClick={() => handleSelectAmbulance(amb.id)}
-                          className={`py-1.5 px-2 rounded-md text-[10.5px] font-bold transition-all flex items-center justify-between border cursor-pointer ${
-                            isSelected
-                              ? "bg-[#E6F4F8] text-[#0B5D7A] border-[#0B5D7A]/50 ring-1 ring-[#0B5D7A]/30"
-                              : "bg-white text-[#556578] border-[#D8E0EA] hover:bg-[#F8FAFC]"
-                          }`}
-                        >
-                          <span className="flex items-center gap-1.5 truncate">
-                            <span
-                              className="w-2 h-2 rounded-full shrink-0"
-                              style={{ backgroundColor: amb.color }}
-                            />
-                            <span>{amb.callSign}</span>
-                          </span>
-                          <span className="font-mono telemetry-num text-[10px] opacity-80">
-                            {Math.round(amb.progress * 100)}%
-                          </span>
-                        </button>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
+              {renderMode === "geojson" ? "⚡ WebGL 60 FPS" : "🎯 3D DOM Markers"}
+            </span>
           </div>
 
-          {/* 4. Skenario Kepadatan Lalu Lintas */}
-          <div className="p-3.5 flex flex-col gap-2 shrink-0">
-            <div className="text-[10px] font-bold text-[#556578] tracking-wider uppercase">
-              Kepadatan Lalu Lintas
-            </div>
-
-            <SegmentedControl
-              fullWidth
-              size="sm"
-              value={trafficDensity}
-              onChange={(val) => handleSetDensity(val as TrafficDensity)}
-              options={[
-                { value: "low", label: "Rendah" },
-                { value: "medium", label: "Sedang" },
-                { value: "jammed", label: "Macet" },
-              ]}
-            />
-          </div>
-
-          {/* 5. Skenario Kondisi Jalan & Cuaca */}
-          <div className="p-3.5 flex flex-col gap-2 shrink-0">
-            <div className="text-[10px] font-bold text-[#556578] tracking-wider uppercase">
-              Kondisi Jalan & Cuaca
-            </div>
-
-            <SegmentedControl
-              fullWidth
-              size="sm"
-              value={roadCondition}
-              onChange={(val) => setRoadCondition(val as RoadCondition)}
-              options={[
-                { value: "dry", label: "Normal" },
-                { value: "rain", label: "Hujan" },
-                { value: "extreme", label: "Ekstrem" },
-              ]}
-            />
-          </div>
-
-          {/* 6. Pengaturan Lanjutan (Collapsible Section) */}
-          <div className="p-3.5 flex flex-col gap-2 shrink-0">
+          <div className="grid grid-cols-2 gap-1.5 text-xs">
             <button
-              type="button"
-              onClick={() => setShowAdvancedRender((v) => !v)}
-              className="flex items-center justify-between w-full text-[10px] font-bold text-[#556578] uppercase tracking-wider hover:text-[#0F172A] cursor-pointer"
+              onClick={() => setRenderMode("geojson")}
+              className={`py-1.5 px-2 rounded-lg font-bold text-[10.5px] transition-all border flex items-center justify-center gap-1 ${
+                renderMode === "geojson"
+                  ? "bg-emerald-600 text-white border-emerald-700 shadow-xs"
+                  : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+              }`}
             >
-              <span>Pengaturan Lanjutan</span>
-              <ChevronRight
-                className={`w-3.5 h-3.5 transition-transform duration-150 ${
-                  showAdvancedRender ? "rotate-90" : ""
-                }`}
-              />
+              <Cpu className="w-3 h-3" />
+              <span>WebGL GeoJSON</span>
             </button>
+            <button
+              onClick={() => setRenderMode("markers")}
+              className={`py-1.5 px-2 rounded-lg font-bold text-[10.5px] transition-all border flex items-center justify-center gap-1 ${
+                renderMode === "markers"
+                  ? "bg-blue-600 text-white border-blue-700 shadow-xs"
+                  : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+              }`}
+            >
+              <CarIcon className="w-3 h-3" />
+              <span>3D Markers</span>
+            </button>
+          </div>
+        </div>
 
-            {showAdvancedRender && (
-              <div className="pt-1 flex flex-col gap-1.5">
-                <div className="text-[10px] font-medium text-[#556578]">
-                  Engine Render POV 3D
-                </div>
-                <SegmentedControl
-                  fullWidth
-                  size="sm"
-                  value={renderMode}
-                  onChange={(val) => setRenderMode(val as "geojson" | "markers")}
-                  options={[
-                    { value: "geojson", label: "WebGL GeoJSON" },
-                    { value: "markers", label: "3D Markers" },
-                  ]}
-                />
-              </div>
-            )}
+        {/* SKENARIO DINAMIS: VOLUME LALU LINTAS */}
+        <div className="glass-card p-3 space-y-2">
+          <div className="flex items-center justify-between text-[10px] font-bold text-gray-500 tracking-wider uppercase">
+            <span>Kepadatan Lalu Lintas</span>
+            <span className="text-gray-900 font-mono font-bold">
+              {activeVehiclesCount} / {getTargetVehicleCount(trafficDensity)} Mobil
+            </span>
           </div>
 
-          {/* 7. Live Telemetri (Key-Value Flat Rows) */}
-          <div className="mt-auto bg-[#F8FAFC] p-3.5 border-t border-[#D8E0EA] flex flex-col gap-2 shrink-0 text-xs">
-            <div className="text-[10px] font-bold text-[#556578] tracking-wider uppercase mb-0.5">
-              Live Telemetri Koridor
-            </div>
+          <div className="grid grid-cols-3 gap-1.5 text-xs">
+            <button
+              onClick={() => handleSetDensity("low")}
+              className={`py-2 px-1 rounded-lg font-bold text-[11px] transition-all border ${
+                trafficDensity === "low"
+                  ? "bg-gray-900 text-white border-gray-900 shadow-xs"
+                  : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+              }`}
+            >
+              Rendah (20)
+            </button>
+            <button
+              onClick={() => handleSetDensity("medium")}
+              className={`py-2 px-1 rounded-lg font-bold text-[11px] transition-all border ${
+                trafficDensity === "medium"
+                  ? "bg-blue-600 text-white border-blue-700 shadow-xs"
+                  : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+              }`}
+            >
+              Sedang (60)
+            </button>
+            <button
+              onClick={() => handleSetDensity("jammed")}
+              className={`py-2 px-1 rounded-lg font-bold text-[11px] transition-all border ${
+                trafficDensity === "jammed"
+                  ? "bg-red-600 text-white border-red-700 shadow-xs"
+                  : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+              }`}
+            >
+              Macet (120)
+            </button>
+          </div>
+        </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-[#556578]">Status Preemption</span>
-              <div>
-                {activeGreenCount > 0 ? (
-                  <StatusBadge
-                    status="EN_ROUTE"
-                    label={`${activeGreenCount} Hijau`}
-                    size="sm"
-                  />
-                ) : activeYellowCount > 0 ? (
-                  <StatusBadge
-                    status="CODE_YELLOW"
-                    label={`${activeYellowCount} Clearance`}
-                    size="sm"
-                  />
-                ) : (
-                  <StatusBadge
-                    status="STANDBY"
-                    label="All Red"
-                    size="sm"
-                  />
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-[#556578]">Mobil Menepi</span>
-              <span className="font-mono font-bold telemetry-num text-[#0F172A]">
-                {vehiclesYieldingCount} kendaraan
+        {/* SKENARIO DINAMIS: KONDISI JALAN & CUACA */}
+        <div className="glass-card p-3 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-gray-500 tracking-wider uppercase">
+              Kondisi Jalan & Cuaca
+            </span>
+            {roadCondition === "rain" ? (
+              <span className="flex items-center gap-1 text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                <CloudRain className="w-2.5 h-2.5" /> Jarak Rem +75%
               </span>
-            </div>
-
-            {activeAmbulance && (
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#556578]">POV: {activeAmbulance.callSign}</span>
-                  <span className="font-mono font-bold telemetry-num text-[#0B5D7A]">
-                    {Math.round(activeAmbulance.speedMps * 3.6)} km/h
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#556578]">Tujuan RS</span>
-                  <span className="font-mono font-semibold telemetry-num text-[#0F172A] truncate max-w-[140px]">
-                    {activeAmbulance.hospitalName.split(" ")[0]} ({Math.round(activeAmbulance.progress * 100)}%)
-                  </span>
-                </div>
-              </>
+            ) : (
+              <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                <Sun className="w-2.5 h-2.5" /> Cengkeram 100%
+              </span>
             )}
           </div>
-        </aside>
-      )}
+
+          <div className="grid grid-cols-3 gap-1.5 text-xs">
+            <button
+              onClick={() => setRoadCondition("dry")}
+              className={`py-1.5 px-1 rounded-lg font-bold text-[11px] transition-all border ${
+                roadCondition === "dry"
+                  ? "bg-blue-600 text-white border-blue-700 shadow-xs"
+                  : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+              }`}
+            >
+              Normal
+            </button>
+            <button
+              onClick={() => setRoadCondition("rain")}
+              className={`py-1.5 px-1 rounded-lg font-bold text-[11px] transition-all border ${
+                roadCondition === "rain"
+                  ? "bg-blue-600 text-white border-blue-700 shadow-xs"
+                  : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+              }`}
+            >
+              Hujan
+            </button>
+            <button
+              onClick={() => setRoadCondition("extreme")}
+              className={`py-1.5 px-1 rounded-lg font-bold text-[11px] transition-all border ${
+                roadCondition === "extreme"
+                  ? "bg-red-600 text-white border-red-700 shadow-xs"
+                  : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+              }`}
+            >
+              Ekstrem
+            </button>
+          </div>
+        </div>
+
+        {/* TELEMETRI AKTIF */}
+        <div className="glass-card p-3 space-y-1.5 text-xs">
+          <div className="text-[10px] text-gray-400 font-bold tracking-wider uppercase mb-1">
+            Live Telemetri Koridor Salemba
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">Status Preemption</span>
+            <div className="flex items-center gap-1 font-mono font-bold text-[10px]">
+              {activeGreenCount > 0 && (
+                <span className="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
+                  🟢 {activeGreenCount} HIJAU
+                </span>
+              )}
+              {activeYellowCount > 0 && (
+                <span className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded animate-pulse">
+                  🟡 {activeYellowCount} CLEARANCE
+                </span>
+              )}
+              {activeGreenCount === 0 && activeYellowCount === 0 && (
+                <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                  🔴 ALL RED
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">Mobil Menepi (Hazard)</span>
+            <span className="font-mono font-bold text-amber-600">
+              {vehiclesYieldingCount} kendaraan
+            </span>
+          </div>
+          {activeAmbulance && (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500">POV: {activeAmbulance.callSign}</span>
+                <span className="font-mono font-bold text-blue-600">
+                  {Math.round(activeAmbulance.speedMps * 3.6)} km/h
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500">Tujuan RS</span>
+                <span className="font-mono font-bold text-emerald-600 truncate max-w-[140px]">
+                  {activeAmbulance.hospitalName.split(" ")[0]} ({Math.round(activeAmbulance.progress * 100)}%)
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+      </aside>
 
       {/* ── AREA MAPBOX DIGITAL TWIN UTAMA ── */}
-      <main className="flex-1 p-2 md:p-3.5 flex flex-col min-h-0 bg-[#F4F6F8] relative">
-        <div className="relative w-full flex-1 min-h-0 bg-gray-100 rounded-xl overflow-hidden border border-[#D8E0EA] shadow-xs">
+      <main className="flex-1 p-4 flex flex-col min-h-[600px]">
+        <div className="relative w-full flex-1 min-h-[600px] bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
           <Map
             ref={mapRef}
             mapboxAccessToken={MAPBOX_TOKEN}
@@ -2239,69 +2246,35 @@ export default function LiveSimulation() {
               })}
           </Map>
 
-          {/* ── OVERLAY HUD ATAS PETA (POJOK KIRI ATAS) ── */}
-          <div className="absolute top-3 left-3 z-10 flex items-center gap-2 pointer-events-none">
-            {isInspectorCollapsed && (
-              <button
-                type="button"
-                onClick={() => setIsInspectorCollapsed(false)}
-                className="pointer-events-auto hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-white/95 backdrop-blur-md border border-[#D8E0EA] rounded-lg shadow-sm text-xs font-semibold text-[#0F172A] hover:bg-[#F8FAFC] transition-all cursor-pointer"
-                title="Buka Panel Kontrol"
-              >
-                <Sliders className="w-3.5 h-3.5 text-[#072F5F]" />
-                <span>Panel</span>
-              </button>
-            )}
-
-            <div className="pointer-events-auto flex items-center gap-2 px-2.5 md:px-3 py-1 md:py-1.5 bg-white/90 backdrop-blur-md border border-[#D8E0EA] rounded-lg shadow-xs text-xs max-w-[calc(100vw-2rem)] md:max-w-none">
-              <span className="w-2 h-2 rounded-full bg-[#0F766E] animate-pulse shrink-0" />
-              <span className="font-bold text-[#072F5F] tracking-wide uppercase text-[10px] md:text-[11px] shrink-0">
-                JAKARTA DIGITAL TWIN
-              </span>
-              <span className="text-[#D8E0EA]">|</span>
-              <span className="text-[#556578] font-medium text-[10px] md:text-[11px] truncate max-w-[200px] md:max-w-[340px]">
+          {/* ── OVERLAY HUD GPS COCKPIT (KIRI ATAS) ── */}
+          <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 max-w-sm pointer-events-none">
+            <div className="glass-card bg-white/95 p-3 rounded-xl border border-gray-200 shadow-md pointer-events-auto">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-900">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>JAKARTA DIGITAL TWIN · MULTI-FLEET</span>
+                </div>
+                <span className="text-[9px] font-bold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">
+                  {ambulances.filter((a) => a.active).length} AMBULANS AKTIF
+                </span>
+              </div>
+              <div className="text-[11px] text-gray-600 leading-snug">
                 {cameraMode === "VIEW_ALL" ? (
-                  <span>
-                    Mode: <strong>View All</strong>
+                  <span className="flex items-center gap-1.5 font-medium text-emerald-700">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    <span>
+                      Mode: <strong>View All (Kamera Bebas)</strong> · Bebas geser, putar, dan atur zoom peta
+                    </span>
                   </span>
                 ) : activeAmbulance ? (
                   <span>
-                    POV: <strong className="text-[#0B5D7A]">{activeAmbulance.callSign}</strong> ➔ {activeAmbulance.hospitalName.split(" ")[0]}
+                    Diikuti: <strong className="text-cyan-700">{activeAmbulance.callSign}</strong> · Rute: {activeAmbulance.startName} ➔ {activeAmbulance.hospitalName}
                   </span>
                 ) : (
-                  <span>{ambulances.filter((a) => a.active).length}/8 Armada Aktif</span>
+                  <span>Tekan "Spawn Ambulance" untuk meluncurkan armada ke koridor Salemba Raya.</span>
                 )}
-              </span>
+              </div>
             </div>
-          </div>
-
-          {/* ── MOBILE COMPACT PEEK BAR (md:hidden) ── */}
-          <div className="md:hidden absolute bottom-0 inset-x-0 z-20 bg-white/95 backdrop-blur-md border-t border-[#D8E0EA] px-4 py-2.5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center justify-between shadow-lg">
-            <div className="flex items-center gap-2 min-w-0">
-              <button
-                type="button"
-                onClick={() => setRunning((r) => !r)}
-                className="p-1.5 rounded-md border border-[#D8E0EA] bg-[#F8FAFC] text-[#0F172A] cursor-pointer"
-                title={running ? "Jeda" : "Lanjutkan"}
-              >
-                {running ? (
-                  <Square className="w-3.5 h-3.5 fill-current text-[#C81E1E]" />
-                ) : (
-                  <Play className="w-3.5 h-3.5 fill-current text-[#0F766E]" />
-                )}
-              </button>
-              <span className="text-xs font-bold text-[#0F172A] truncate">
-                {activeAmbulance ? activeAmbulance.callSign : `${ambulances.filter((a) => a.active).length}/8 Aktif`}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsMobileControlsOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#072F5F] text-white rounded-lg text-xs font-bold shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
-            >
-              <span>Kontrol Simulasi</span>
-              <ChevronUp className="w-3.5 h-3.5" />
-            </button>
           </div>
         </div>
       </main>
