@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "mapbox-gl/dist/mapbox-gl.css";
 import { CoreProvider } from "@/context/CoreContext";
 import { ToastProvider } from "@/components/ToastProvider";
 import Navbar from "@/components/Navbar";

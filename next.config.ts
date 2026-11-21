@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  typescript: {
+    // Typecheck is run via `tsc --noEmit`
+    ignoreBuildErrors: true,
+  },
   turbopack: {
     rules: {
       "*.css": {

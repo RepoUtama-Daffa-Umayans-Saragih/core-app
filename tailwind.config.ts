@@ -9,18 +9,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        "deep-space":   "#0B0227",   // Latar belakang utama
-        "panel":        "#1F027F",   // Cards, sidebars
-        "accent":       "#495AEE",   // Tombol aktif, rute
-        "accent-soft":  "#929BEC",   // Hover, border, teks sekunder
-        "text-light":   "#DCE2F4",   // Tipografi utama
-        "alert-red":    "#FF4C4C",   // Code Red / darurat
-        "alert-yellow": "#FFC107",   // Code Yellow
-        "neon-green":   "#00FF9C",   // Lampu hijau simulasi
+        "deep-space":   "#F8FAFC",   // Background utama Slate-50
+        "panel":        "#FFFFFF",   // Background card/sidebar, putih murni
+        "accent":       "#2563EB",   // Biru modern Vercel/Linear
+        "accent-soft":  "#E2E8F0",   // Border/hover state Slate-200
+        "text-light":   "#0F172A",   // Teks utama Slate-900
+        "text-muted":   "#64748B",   // Teks sekunder Slate-500
+        "alert-red":    "#EF4444",   // Red-500
+        "alert-yellow": "#F59E0B",   // Amber-500
+        "neon-green":   "#10B981",   // Emerald-500
       },
       fontFamily: {
-        display: ["Orbitron", "sans-serif"],
-        body:    ["Inter", "sans-serif"],
+        sans:    ["Inter", "Roboto", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        display: ["Inter", "Roboto", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        body:    ["Inter", "Roboto", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
       },
       animation: {
         "pulse-red":  "pulse-red 1s cubic-bezier(0.4,0,0.6,1) infinite",
@@ -30,12 +32,12 @@ const config: Config = {
       },
       keyframes: {
         "pulse-red": {
-          "0%, 100%": { backgroundColor: "#FF4C4C33" },
-          "50%":      { backgroundColor: "#FF4C4C99" },
+          "0%, 100%": { backgroundColor: "#FF4C4C22" },
+          "50%":      { backgroundColor: "#FF4C4C66" },
         },
         glow: {
-          from: { boxShadow: "0 0 10px #495AEE66" },
-          to:   { boxShadow: "0 0 25px #495AEEBB, 0 0 50px #495AEE44" },
+          from: { boxShadow: "0 1px 3px rgba(0,85,255,0.1)" },
+          to:   { boxShadow: "0 4px 12px rgba(0,85,255,0.2)" },
         },
         slideIn: {
           from: { transform: "translateY(-8px)", opacity: "0" },
@@ -43,7 +45,7 @@ const config: Config = {
         },
         "flash-red": {
           "0%, 100%": { backgroundColor: "transparent" },
-          "50%":      { backgroundColor: "#FF4C4C33" },
+          "50%":      { backgroundColor: "rgba(255,76,76,0.15)" },
         },
       },
     },

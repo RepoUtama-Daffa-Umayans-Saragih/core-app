@@ -41,17 +41,17 @@ const ICONS: Record<ToastType, React.ElementType> = {
 };
 
 const STYLES: Record<ToastType, string> = {
-  success: "border-[#00FF9C]/40 bg-[#00FF9C]/10 shadow-[0_0_20px_rgba(0,255,156,0.15)]",
-  danger:  "border-[#FF4C4C]/50 bg-[#FF4C4C]/15 shadow-[0_0_30px_rgba(255,76,76,0.25)]",
-  warning: "border-[#FFC107]/40 bg-[#FFC107]/10 shadow-[0_0_20px_rgba(255,193,7,0.15)]",
-  info:    "border-[#495AEE]/40 bg-[#495AEE]/10 shadow-[0_0_20px_rgba(73,90,238,0.15)]",
+  success: "border-emerald-200 bg-emerald-50 text-emerald-950 shadow-md",
+  danger:  "border-red-200 bg-red-50 text-red-950 shadow-md",
+  warning: "border-amber-200 bg-amber-50 text-amber-950 shadow-md",
+  info:    "border-blue-200 bg-blue-50 text-blue-950 shadow-md",
 };
 
 const ICON_STYLES: Record<ToastType, string> = {
-  success: "text-neon-green",
-  danger:  "text-alert-red animate-pulse",
-  warning: "text-alert-yellow",
-  info:    "text-accent",
+  success: "text-emerald-600",
+  danger:  "text-red-600 animate-pulse",
+  warning: "text-amber-600",
+  info:    "text-[#0055FF]",
 };
 
 function ToastItem({
@@ -91,16 +91,16 @@ function ToastItem({
     >
       <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${ICON_STYLES[toast.type]}`} />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-text-light leading-tight">
+        <p className="text-sm font-bold text-gray-900 leading-tight">
           {toast.title}
         </p>
-        <p className="text-xs text-accent-soft/70 mt-0.5 leading-snug">
+        <p className="text-xs text-gray-600 mt-1 leading-snug">
           {toast.message}
         </p>
       </div>
       <button
         onClick={() => onClose(toast.id)}
-        className="text-accent-soft/40 hover:text-text-light transition-colors mt-0.5 shrink-0"
+        className="text-gray-400 hover:text-gray-700 transition-colors mt-0.5 shrink-0"
       >
         <X className="w-4 h-4" />
       </button>

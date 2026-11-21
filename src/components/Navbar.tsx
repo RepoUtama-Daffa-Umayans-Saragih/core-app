@@ -36,15 +36,15 @@ const MODES: { id: Mode; label: string; sublabel: string; Icon: React.ElementTyp
 function StatusPulse({ code }: { code: string }) {
   const isActive = code !== "IDLE";
   return (
-    <span className="flex items-center gap-1.5 text-xs">
+    <span className="flex items-center gap-1.5 text-xs bg-slate-100 px-3 py-1 rounded-full border border-slate-200/60 font-medium">
       <span className={`w-2 h-2 rounded-full ${
-        code === "CODE_RED"    ? "bg-alert-red animate-pulse" :
-        code === "CODE_YELLOW" ? "bg-alert-yellow animate-pulse" :
-        code === "EN_ROUTE"    ? "bg-neon-green animate-pulse" :
-        code === "ARRIVED"     ? "bg-neon-green" :
-        "bg-accent-soft/40"
+        code === "CODE_RED"    ? "bg-red-500 animate-pulse" :
+        code === "CODE_YELLOW" ? "bg-amber-500 animate-pulse" :
+        code === "EN_ROUTE"    ? "bg-emerald-500 animate-pulse" :
+        code === "ARRIVED"     ? "bg-blue-500" :
+        "bg-slate-400"
       }`} />
-      <span className={isActive ? "text-text-light font-semibold" : "text-accent-soft/60"}>
+      <span className={isActive ? "text-slate-900 font-semibold" : "text-slate-500"}>
         {code === "IDLE"         ? "STANDBY"       :
          code === "CODE_RED"     ? "⚡ CODE RED"    :
          code === "CODE_YELLOW"  ? "⚠ CODE YELLOW" :
@@ -67,7 +67,7 @@ function LiveClock() {
   }, []);
 
   return (
-    <span className="font-mono text-xs text-accent-soft/80 hidden lg:block tabular-nums">
+    <span className="font-mono text-xs text-slate-500 hidden lg:block tabular-nums bg-slate-100/80 px-2.5 py-1 rounded-lg border border-slate-200/60">
       {time}
     </span>
   );
@@ -78,32 +78,33 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-16
-                    bg-[#0B0227]/95 backdrop-blur-lg
-                    border-b border-[#495AEE]/20
+                    bg-white/85 backdrop-blur-md
+                    border-b border-slate-200/60
                     flex items-center justify-between px-6
-                    shadow-[0_4px_30px_rgba(73,90,238,0.15)]">
+                    shadow-xs">
 
-      {/* ── Logo / Brand ── */}
-      <div className="flex items-center gap-3 select-none">
-        <div className="relative">
-          <Siren className="w-7 h-7 text-accent" strokeWidth={1.5} />
+      {/* Brand & Logo */}
+      <div className="flex items-center gap-4 select-none">
+        <div className="relative flex items-center shrink-0">
+          <img
+            src="/image_36.png"
+            alt="C.O.R.E. Logo"
+            className="h-10 w-auto object-contain cursor-pointer"
+          />
           {state.dispatchCode !== "IDLE" && (
-            <span className="absolute -top-1 -right-1 w-3 h-3
-                             bg-alert-red rounded-full animate-pulse" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping border-2 border-white" />
           )}
         </div>
-        <div>
-          <div className="font-display font-bold text-sm tracking-[0.15em] text-text-light leading-none">
-            C.O.R.E.
-          </div>
-          <div className="text-[9px] tracking-widest text-accent-soft/70 leading-none mt-0.5">
-            CLEARANCE OPTIMIZATION & ROUTING ENGINE
+
+        <div className="border-l-2 border-slate-200 pl-4 hidden sm:block">
+          <div className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest leading-tight max-w-[200px]">
+            CLEARANCE OPTIMIZATION &amp; ROUTING ENGINE
           </div>
         </div>
       </div>
 
-      {/* ── Mode Tabs ── */}
-      <div className="flex items-center gap-1 bg-[#1F027F]/40 p-1 rounded-xl border border-accent/20">
+      {/* 3-Mode Segmented Tabs */}
+      <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/60">
         {MODES.map(({ id, label, sublabel, Icon }) => {
           const isActive = state.activeMode === id;
           return (
@@ -111,19 +112,19 @@ export default function Navbar() {
               key={id}
               onClick={() => setMode(id)}
               className={`
-                flex items-center gap-2.5 px-4 py-2 rounded-lg
-                transition-all duration-300 cursor-pointer
+                flex items-center gap-2.5 px-4 py-1.5 rounded-lg
+                transition-all duration-200 cursor-pointer
                 ${isActive
-                  ? "bg-accent text-white shadow-[0_0_20px_rgba(73,90,238,0.5)]"
-                  : "text-accent-soft/70 hover:text-text-light hover:bg-accent/10"
+                  ? "bg-white text-blue-600 shadow-xs font-semibold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60 font-medium"
                 }
               `}
             >
-              <Icon className="w-4 h-4 shrink-0" strokeWidth={isActive ? 2 : 1.5} />
+              <Icon className="w-4 h-4 shrink-0" strokeWidth={isActive ? 2.2 : 1.7} />
               <div className="text-left hidden md:block">
-                <div className="text-xs font-semibold leading-none">{label}</div>
-                <div className={`text-[9px] leading-none mt-0.5 ${
-                  isActive ? "text-blue-200" : "text-accent-soft/50"
+                <div className="text-xs font-semibold leading-tight">{label}</div>
+                <div className={`text-[10px] leading-none mt-0.5 ${
+                  isActive ? "text-blue-500" : "text-slate-400"
                 }`}>{sublabel}</div>
               </div>
             </button>
@@ -131,11 +132,11 @@ export default function Navbar() {
         })}
       </div>
 
-      {/* ── Status Bar ── */}
-      <div className="flex items-center gap-4">
+      {/* Telemetry Status Bar */}
+      <div className="flex items-center gap-3">
         <StatusPulse code={state.dispatchCode} />
-        <div className="flex items-center gap-1.5 text-xs text-neon-green">
-          <Wifi className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-medium bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
+          <Wifi className="w-3.5 h-3.5 text-emerald-600" />
           <span className="hidden sm:inline font-mono">EDGE ONLINE</span>
         </div>
         <LiveClock />
